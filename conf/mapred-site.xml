@@ -6,7 +6,7 @@
 <configuration>
 <property>
   <name>mapred.job.tracker</name>
-  <value>master:9001</value>
+  <value>DataNode1:9001</value>
   <description>The host and port that the MapReduce job tracker runs
   at.  If "local", then jobs are run in-process as a single map
   and reduce task.
@@ -21,26 +21,26 @@
 </property>
 <property>
 	<name>mapred.tasktracker.map.tasks.maximum</name>
-	<value>4</value>
+	<value>16</value>
 	<description>The maximum number of map tasks that will be run
 		simultaneously by a task tracker. 
 	</description>
 </property>
 <property>
 	<name>mapred.map.tasks</name>
-	<value>4</value>
+	<value>16</value>
 	<description>The default number of map tasks per job </description>
 </property>
 <property>
 	<name>mapred.tasktracker.reduce.tasks.maximum</name>
-	<value>1</value>
+	<value>16</value>
 	<description>The maximum number of reduce tasks that will be run
 		simultaneously by a task tracker.
 	</description>
 </property>
 <property>
 	<name>mapred.reduce.tasks</name>
-	<value>4</value>
+	<value>16</value>
 	<description>The default number of reduce tasks per job. Typically set to 99% 
 		of the cluster's reduce capacity, so that if a node fails the reduces can
 		still be executed in a single wave.
