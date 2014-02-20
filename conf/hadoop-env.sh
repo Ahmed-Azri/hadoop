@@ -54,3 +54,4 @@ export HADOOP_JOBTRACKER_OPTS="-Dcom.sun.management.jmxremote $HADOOP_JOBTRACKER
 # export HADOOP_NICENESS=10
 export JAVA_HOME=/usr/lib/jvm/default-java
 export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true
+export HADOOP_LOG_DIR=/home/hduser/hadoop_logs
