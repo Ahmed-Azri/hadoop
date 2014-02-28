@@ -46,4 +46,9 @@
 		still be executed in a single wave.
 	</description>
 </property>
+<property>
+	<name>mapreduce.job.max.split.locations</name>
+	<value>16</value>
+	<description>The max splits of mr job</description>
+</property>
 </configuration>
