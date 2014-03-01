@@ -56,8 +56,9 @@ export JAVA_HOME=/usr/lib/jvm/default-java
 export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true
 export HADOOP_LOG_DIR=/home/hduser/hadoop_logs
 
-export bind_ip=data$(/bin/hostname)
+bind_ip=data$(/bin/hostname)
 export BIND_OPTS="-Dlocal.bind.address=${bind_ip}"
+
 export HADOOP_NAMENODE_OPTS="-Dcom.sun.management.jmxremote $HADOOP_NAMENODE_OPTS $BIND_OPTS"
 export HADOOP_SECONDARYNAMENODE_OPTS="-Dcom.sun.management.jmxremote $HADOOP_SECONDARYNAMENODE_OPTS $BIND_OPTS"
 export HADOOP_DATANODE_OPTS="-Dcom.sun.management.jmxremote $HADOOP_DATANODE_OPTS $BIND_OPTS"
