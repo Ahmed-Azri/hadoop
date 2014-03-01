@@ -51,4 +51,12 @@
 	<value>16</value>
 	<description>The max splits of mr job</description>
 </property>
+<property>
+	<name>mapred.job.tracker.http.address</name>
+	<value>${local.bind.address}:50030</value>
+</property>
+<property>
+	<name>mapred.task.tracker.http.address</name>
+	<value>${local.bind.address}:50060</value>
+</property>
 </configuration>

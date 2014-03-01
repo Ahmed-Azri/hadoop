@@ -12,4 +12,32 @@
   The default is used if replication is not specified in create time.
   </description>
 </property>
+<property>
+	<name>dfs.http.address</name>
+	<value>${local.bind.address}:50070</value>
+</property>
+<property>
+	<name>dfs.https.address</name>
+	<value>${local.bind.address}:50470</value>
+</property>
+<property>
+	<name>dfs.secondary.http.address</name>
+	<value>${local.bind.address}:50090</value>
+</property>
+<property>
+	<name>dfs.datanode.address</name>
+	<value>${local.bind.address}:50010</value>
+</property>
+<property>
+	<name>dfs.datanode.ipc.address</name>
+	<value>${local.bind.address}:50020</value>
+</property>
+<property>
+	<name>dfs.datanode.http.address</name>
+	<value>${local.bind.address}:50075</value>
+</property>
+<property>
+	<name>dfs.datanode.https.address</name>
+	<value>${local.bind.address}:50475</value>
+</property>
 </configuration>
