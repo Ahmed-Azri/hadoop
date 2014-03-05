@@ -1416,6 +1416,7 @@ class ReduceTask extends Task {
                                 loc.getTaskAttemptId() + " from " + 
                                 loc.getHost());
         }
+		LOG.info("#### after getMapOutput from " + loc.taskOutput.getHost());
         
         // The size of the map-output
         long bytes = mapOutput.compressedSize;
@@ -1444,10 +1445,12 @@ class ReduceTask extends Task {
           // Process map-output
           if (mapOutput.inMemory) {
             // Save it in the synchronized list of map-outputs
+			LOG.info("@@@ " + loc.taskOutput.getHost() + ", mapOutput.inMemory is true");
             mapOutputsFilesInMemory.add(mapOutput);
           } else {
             // Rename the temporary file to the final file; 
             // ensure it is on the same partition
+			LOG.info("@@@ " + loc.taskOutput.getHost() + ", mapOutput.inMemory is false");
             tmpMapOutput = mapOutput.file;
             filename = new Path(tmpMapOutput.getParent(), filename.getName());
             if (!localFileSys.rename(tmpMapOutput, filename)) {
@@ -1507,7 +1510,8 @@ class ReduceTask extends Task {
               "Got invalid response code " + rc + " from " + url +
               ": " + connection.getResponseMessage());
         }
- 
+		LOG.info("#### get connection respond from " + mapOutputLoc.taskOutput.getHost());
+
         // Validate header from map output
         TaskAttemptID mapId = null;
         try {
@@ -1675,6 +1679,7 @@ class ReduceTask extends Task {
                                         int mapOutputLength,
                                         int compressedLength)
       throws IOException, InterruptedException {
+	    LOG.info("@@@ in shuffleInMemory for " +  mapOutputLoc.taskOutput.getHost());
         // Reserve ram for the map-output
         boolean createdNow = ramManager.reserve(mapOutputLength, input);
       
@@ -1804,6 +1809,7 @@ class ReduceTask extends Task {
                                       long mapOutputLength) 
       throws IOException {
         // Find out a suitable location for the output on local-filesystem
+	    LOG.info("@@@ in shuffleToDisk for " +  mapOutputLoc.taskOutput.getHost());
         Path localFilename = 
           lDirAlloc.getLocalPathForWrite(filename.toUri().getPath(), 
                                          mapOutputLength, conf);
@@ -2200,11 +2206,10 @@ class ReduceTask extends Task {
           } catch (InterruptedException e) { } // IGNORE
           
           while (numInFlight > 0 && mergeThrowable == null) {
-//            if (LOG.isDebugEnabled()) {
-//              LOG.debug(reduceTask.getTaskID() + " numInFlight = " + 
-//                        numInFlight);
-//            }
-			LOG.info("### " + reduceTask.getTaskID() + " numInFlight = " + numInFlight);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(reduceTask.getTaskID() + " numInFlight = " + 
+                        numInFlight);
+            }
             //the call to getCopyResult will either 
             //1) return immediately with a null or a valid CopyResult object,
             //                 or
