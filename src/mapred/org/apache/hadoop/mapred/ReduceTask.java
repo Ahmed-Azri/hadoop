@@ -1679,7 +1679,6 @@ class ReduceTask extends Task {
                                         int mapOutputLength,
                                         int compressedLength)
       throws IOException, InterruptedException {
-	    LOG.info("@@@ in shuffleInMemory for " +  mapOutputLoc.taskOutput.getHost());
         // Reserve ram for the map-output
         boolean createdNow = ramManager.reserve(mapOutputLength, input);
       
@@ -1712,6 +1711,7 @@ class ReduceTask extends Task {
           input = codec.createInputStream(input, decompressor);
         }
       
+	    LOG.info("@@@ in shuffleInMemory for " +  mapOutputLoc.taskOutput.getHost());
         // Copy map-output into an in-memory buffer
         byte[] shuffleData = new byte[mapOutputLength];
         MapOutput mapOutput = 
@@ -1731,6 +1731,8 @@ class ReduceTask extends Task {
                            (shuffleData.length-bytesRead));
           }
 
+			LOG.info("@@@ Read " + bytesRead + " bytes from map-output for " +
+                mapOutputLoc.taskOutput.getHost());
           if (LOG.isDebugEnabled()) {
             LOG.debug("Read " + bytesRead + " bytes from map-output for " +
                 mapOutputLoc.getTaskAttemptId());
