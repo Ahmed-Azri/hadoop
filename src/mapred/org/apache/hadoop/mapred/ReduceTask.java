@@ -2200,10 +2200,11 @@ class ReduceTask extends Task {
           } catch (InterruptedException e) { } // IGNORE
           
           while (numInFlight > 0 && mergeThrowable == null) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug(reduceTask.getTaskID() + " numInFlight = " + 
-                        numInFlight);
-            }
+//            if (LOG.isDebugEnabled()) {
+//              LOG.debug(reduceTask.getTaskID() + " numInFlight = " + 
+//                        numInFlight);
+//            }
+			LOG.info("### " + reduceTask.getTaskID() + " numInFlight = " + numInFlight);
             //the call to getCopyResult will either 
             //1) return immediately with a null or a valid CopyResult object,
             //                 or
@@ -2233,7 +2234,9 @@ class ReduceTask extends Task {
               copyPhase.setStatus("copy (" + numCopied + " of " + numMaps 
                                   + " at " +
                                   mbpsFormat.format(transferRate) +  " MB/s)");
-                
+              LOG.info("### copy (" + numCopied + " of " + numMaps
+					  + " at " + mbpsFormat.format(transferRate) + " MB/s)");
+
               // Note successful fetch for this mapId to invalidate
               // (possibly) old fetch-failures
               fetchFailedMaps.remove(cr.getLocation().getTaskId());
