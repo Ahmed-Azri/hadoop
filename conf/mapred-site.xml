@@ -55,4 +55,8 @@
 	<name>slave.host.name</name>
 	<value>${local.bind.address}</value>
 </property>
+<property>
+	<name>mapred.reduce.parallel.copies</name>
+	<value>16</value>
+</property>
 </configuration>
