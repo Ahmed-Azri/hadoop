@@ -28,7 +28,7 @@
 </property>
 <property>
 	<name>mapred.map.tasks</name>
-	<value>16</value>
+	<value>8</value>
 	<description>The default number of map tasks per job </description>
 </property>
 <property>
@@ -48,7 +48,7 @@
 </property>
 <property>
 	<name>mapreduce.job.max.split.locations</name>
-	<value>16</value>
+	<value>8</value>
 	<description>The max splits of mr job</description>
 </property>
 <property>
