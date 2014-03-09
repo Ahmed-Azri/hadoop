@@ -195,7 +195,6 @@ class MapTask extends Task {
       
       bytesInPrev = getInputBytes(fsStats);
       rawIn = job.getInputFormat().getRecordReader(split, job, reporter);
-	  LOG.info("### rawIn.getClass() is " + rawIn.getClass());
       bytesInCurr = getInputBytes(fsStats);
       fileInputByteCounter.increment(bytesInCurr - bytesInPrev);
       
@@ -368,8 +367,10 @@ class MapTask extends Task {
     }
 
     if (useNewApi) {
+	  LOG.info("### run new mapper");
       runNewMapper(job, splitMetaInfo, umbilical, reporter);
     } else {
+	  LOG.info("### run old mapper");
       runOldMapper(job, splitMetaInfo, umbilical, reporter);
     }
     done(umbilical, reporter);
