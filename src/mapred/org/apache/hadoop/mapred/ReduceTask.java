@@ -1712,10 +1712,13 @@ class ReduceTask extends Task {
                         mapOutputLoc.getTaskAttemptId(), shuffleData, compressedLength);
         
         int bytesRead = 0;
+		LOG.info("@@@ Start receiving from " + mapOutputLoc.taskOutput.getHost());
         try {
           int n = input.read(shuffleData, 0, shuffleData.length);
           while (n > 0) {
             bytesRead += n;
+			LOG.info("@@@ Receive from " + mapOutputLoc.taskOutput.getHost() +
+					", n = " + Integer.toString(n) + ", bytesRead = " + Integer.toString(bytesRead));
             shuffleClientMetrics.inputBytes(n);
 
             // indicate we're making progress
@@ -1723,6 +1726,7 @@ class ReduceTask extends Task {
             n = input.read(shuffleData, bytesRead, 
                            (shuffleData.length-bytesRead));
           }
+		LOG.info("@@@ End receiving from " + mapOutputLoc.taskOutput.getHost());
 
           if (LOG.isDebugEnabled()) {
             LOG.debug("Read " + bytesRead + " bytes from map-output for " +
