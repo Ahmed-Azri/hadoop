@@ -48,7 +48,7 @@
 </property>
 <property>
 	<name>mapreduce.job.max.split.locations</name>
-	<value>8</value>
+	<value>16</value>
 	<description>The max splits of mr job</description>
 </property>
 <property>

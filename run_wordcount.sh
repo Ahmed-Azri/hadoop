@@ -3,4 +3,4 @@ if [ $# -ne 1 ]; then
 	exit 0
 fi
 
-bin/hadoop jar WordCount.jar org.myorg.WordCount /hduser/data_60/* $1
+bin/hadoop jar WordCount.jar org.myorg.WordCount /hduser/data_30_16/* $1
