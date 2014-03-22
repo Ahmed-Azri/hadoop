@@ -45,7 +45,7 @@ import org.apache.commons.logging.LogFactory;
  * string.
  */
 public class Text extends BinaryComparable
-    implements WritableComparable<BinaryComparable> {
+    implements WritableComparable<BinaryComparable> , Quantifiable {
   private static final Log LOG= LogFactory.getLog(Text.class);
   
   private static ThreadLocal<CharsetEncoder> ENCODER_FACTORY =
@@ -590,5 +590,9 @@ public class Text extends BinaryComparable
       ch = iter.next();
     }
     return size;
+  }
+  @Override
+  public int getContentSize() {
+	return getLength() + 1;
   }
 }

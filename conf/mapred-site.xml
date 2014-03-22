@@ -59,4 +59,14 @@
 	<name>mapred.reduce.parallel.copies</name>
 	<value>16</value>
 </property>
+<property>
+    <name>mapred.openflow.enabled</name>
+    <value>true</value>
+    <description>The flag to indicate if openflow version is enabled</description>
+</property>
+<property>
+    <name>mapred.openflow.controller</name>
+    <value>192.168.3.20</value>
+    <description>Indicate the ip of openflow controller</description>
+</property>
 </configuration>

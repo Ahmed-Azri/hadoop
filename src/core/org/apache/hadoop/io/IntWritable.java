@@ -21,7 +21,7 @@ package org.apache.hadoop.io;
 import java.io.*;
 
 /** A WritableComparable for ints. */
-public class IntWritable implements WritableComparable {
+public class IntWritable implements WritableComparable, Quantifiable {
   private int value;
 
   public IntWritable() {}
@@ -81,6 +81,10 @@ public class IntWritable implements WritableComparable {
 
   static {                                        // register this comparator
     WritableComparator.define(IntWritable.class, new Comparator());
+  }
+  @Override
+  public int getContentSize() {
+	return 4;
   }
 }
 

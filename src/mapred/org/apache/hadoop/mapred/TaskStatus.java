@@ -21,6 +21,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,6 +62,12 @@ public abstract class TaskStatus implements Writable, Cloneable {
   private Counters counters;
   private boolean includeCounters;
   private SortedRanges.Range nextRecordRange = new SortedRanges.Range();
+
+  //### modify
+  private int mapReduceInfoNum = 0;
+  private int serialNumber = 0;
+  private Map<Integer, Integer> mapReduceInfo;
+  //
 
   public TaskStatus() {
     taskid = new TaskAttemptID();
@@ -101,7 +109,51 @@ public abstract class TaskStatus implements Writable, Cloneable {
   }
   public String getStateString() { return stateString; }
   public void setStateString(String stateString) { this.stateString = stateString; }
-  
+ 
+  //## modify
+  public void setSerialNumber(int serialNumber) {
+    this.serialNumber = serialNumber;
+  }
+  public int getSerialNumber() {
+    return serialNumber;
+  }
+  public boolean isOpenFlowEnabled() {
+    return mapReduceInfoNum != 0;
+  }
+  public void disableOpenFlow()
+  {
+    mapReduceInfoNum = 0;
+  }
+  public int getMapReduceInfoNum() {
+    return mapReduceInfoNum;
+  }
+  public void setMapReduceInfo(int partitioner, int bytes) {
+    if(mapReduceInfo == null)
+        mapReduceInfo = new HashMap<Integer, Integer>();
+    if(!mapReduceInfo.containsKey(partitioner)
+        || mapReduceInfo.get(partitioner) == null)
+        mapReduceInfo.put(partitioner, 0);
+    Integer currentBytes = mapReduceInfo.get(partitioner);
+    int updatedBytes = currentBytes.intValue() + bytes;
+    mapReduceInfo.put(partitioner, updatedBytes);
+
+    mapReduceInfoNum = mapReduceInfo.size();
+  }
+  public Map<Integer, Integer> getMapReduceInfo() {
+    if(!isOpenFlowEnabled())
+      return null;
+    return mapReduceInfo;
+  }
+  public Integer getMapReduceInfo(int partitioner) {
+    if(!isOpenFlowEnabled())
+      return new Integer(0);
+    if(mapReduceInfo.containsKey(partitioner)
+      || mapReduceInfo.get(partitioner) == null)
+      return new Integer(0);
+    return mapReduceInfo.get(partitioner);
+  }
+  //
+ 
   /**
    * Get the next record range which is going to be processed by Task.
    * @return nextRecordRange
@@ -309,7 +361,24 @@ public abstract class TaskStatus implements Writable, Cloneable {
     setStateString(state);
     setCounters(counters);
   }
-  
+  //### modify
+  synchronized void statusUpdate(float progress,
+                                 String state,
+                                 Counters counters,
+                                 int serialNumber,
+                                 Map<Integer, Integer> newMapReduceInfo) {
+    setProgress(progress);
+    setStateString(state);
+    setCounters(counters);
+
+    mapReduceInfo = new HashMap<Integer, Integer>();
+    this.serialNumber = serialNumber;
+    for(Integer partitionerNum : newMapReduceInfo.keySet())
+      this.mapReduceInfo.put(partitionerNum, newMapReduceInfo.get(partitionerNum));
+    mapReduceInfoNum = mapReduceInfo.size();
+  }
+  //  
+
   /**
    * Update the status of the task.
    * 
@@ -333,6 +402,20 @@ public abstract class TaskStatus implements Writable, Cloneable {
     this.phase = status.getPhase();
     this.counters = status.getCounters();
     this.outputSize = status.outputSize;
+
+    //### modify
+    if(status.isOpenFlowEnabled())
+    {
+      this.mapReduceInfoNum = status.getMapReduceInfoNum();
+      this.mapReduceInfo = new HashMap<Integer, Integer>();
+      Map<Integer, Integer> newMapReduceInfo = status.getMapReduceInfo();
+      for(Integer partitioner : newMapReduceInfo.keySet())
+        this.mapReduceInfo.put(partitioner, newMapReduceInfo.get(partitioner));
+      this.serialNumber = status.getSerialNumber();
+    }
+    else
+      this.mapReduceInfoNum = 0;
+    //
   }
 
   /**
@@ -400,6 +483,17 @@ public abstract class TaskStatus implements Writable, Cloneable {
       counters.write(out);
     }
     nextRecordRange.write(out);
+
+    //### modify
+    out.writeInt(mapReduceInfoNum);
+    if(isOpenFlowEnabled()) {
+      out.writeInt(serialNumber);
+      for(Integer partitioner : mapReduceInfo.keySet()) {
+        out.writeInt(partitioner.intValue());
+        out.writeInt(mapReduceInfo.get(partitioner).intValue());
+      }
+    }
+    //
   }
 
   public void readFields(DataInput in) throws IOException {
@@ -419,6 +513,19 @@ public abstract class TaskStatus implements Writable, Cloneable {
       counters.readFields(in);
     }
     nextRecordRange.readFields(in);
+
+    //### modify
+    this.mapReduceInfoNum = in.readInt();
+    if(isOpenFlowEnabled()) {
+      this.serialNumber = in.readInt();
+      this.mapReduceInfo = new HashMap<Integer, Integer>();
+      for(int i=0; i < this.mapReduceInfoNum; ++i) {
+        Integer partitioner = in.readInt();
+        Integer bytes = in.readInt();
+        this.mapReduceInfo.put(partitioner, bytes);
+      }
+    }
+    //
   }
   
   //////////////////////////////////////////////////////////////////////////////

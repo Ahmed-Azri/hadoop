@@ -4501,6 +4501,28 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
   void updateTaskStatuses(TaskTrackerStatus status) {
     String trackerName = status.getTrackerName();
     for (TaskStatus report : status.getTaskReports()) {
+    //###
+/*    if(report.getPhase() == TaskStatus.Phase.MAP) {
+        if(!report.isOpenFlowEnabled())
+          LOG.info("### phase is map, not openflow enabled");
+        else if(serialNumber != report.getSerialNumber())
+        {
+          serialNumber = report.getSerialNumber();
+          Map<Integer, Integer> ofmap = report.getMapReduceInfo();
+          StringBuffer stringBuf = new StringBuffer();
+          String ofmapString = "partitioner: 0, size: " + ofmap.get(0).intValue();
+          receivedByte += ofmap.get(0).intValue();
+          LOG.info("### in updateTaskStatuses" +
+              ", taskTracker: " + report.getTaskTracker() +
+              ", id: " + report.getTaskID() +
+              ", serialNumber: " + serialNumber +
+              ", receivedByte is " + Integer.toString(receivedByte) +
+              ", openflowMapReduceInfo: " + ofmapString);
+        }
+      }
+      else
+        LOG.info("### phase is " + report.getPhase());*/
+
       report.setTaskTracker(trackerName);
       TaskAttemptID taskId = report.getTaskID();
       

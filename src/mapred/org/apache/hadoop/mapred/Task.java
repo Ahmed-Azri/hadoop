@@ -29,6 +29,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
 
 import javax.crypto.SecretKey;
 
@@ -165,6 +167,13 @@ abstract public class Task implements Writable, Configurable {
   protected TaskUmbilicalProtocol umbilical;
   protected SecretKey tokenSecret;
   protected JvmContext jvmContext;
+
+  //### modify
+  protected boolean openflowEnabled;
+  protected int serialNumber = 0;
+  protected Map<Integer, Integer> openflowMapReduceInformation;
+  protected Lock openflowLock = new ReentrantLock();
+  //
 
   ////////////////////////////////////////////
   // Constructors
@@ -674,9 +683,24 @@ abstract public class Task implements Writable, Configurable {
           if (sendProgress) {
             // we need to send progress update
             updateCounters();
-            taskStatus.statusUpdate(taskProgress.get(),
-                                    taskProgress.toString(), 
-                                    counters);
+			//### modify
+			if(!openflowEnabled) {
+              taskStatus.statusUpdate(taskProgress.get(),
+                                      taskProgress.toString(), 
+                                      counters);
+			}
+            else {
+              openflowLock.lock();
+              taskStatus.statusUpdate(taskProgress.get(),
+                                      taskProgress.toString(),
+                                      counters,
+                                      serialNumber,
+                                      openflowMapReduceInformation);
+                openflowMapReduceInformation = new HashMap<Integer, Integer>();
+                serialNumber++;
+                openflowLock.unlock();
+            }
+            // 
             taskFound = umbilical.statusUpdate(taskId, taskStatus, jvmContext);
             taskStatus.clearStatus();
           }

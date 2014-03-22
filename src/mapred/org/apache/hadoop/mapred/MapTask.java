@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,6 +77,7 @@ import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.io.Quantifiable;
 
 /** A Map task. */
 class MapTask extends Task {
@@ -365,6 +368,17 @@ class MapTask extends Task {
       runTaskCleanupTask(umbilical, reporter);
       return;
     }
+
+    //### modify
+//  LOG.info("### in MapTask, job.getOpenFlowEnabled is " + job.getOpenFlowEnabled() +
+//          ", ip is " + job.getOpenFlowController());
+
+    openflowEnabled = job.getOpenFlowEnabled();
+    if(openflowEnabled)
+      openflowMapReduceInformation = new HashMap<Integer, Integer>();
+    else
+      openflowMapReduceInformation = null;
+	//
 
     if (useNewApi) {
 	  LOG.info("### run new mapper");
@@ -689,8 +703,37 @@ class MapTask extends Task {
 
     @Override
     public void write(K key, V value) throws IOException, InterruptedException {
-      collector.collect(key, value,
-                        partitioner.getPartition(key, value, partitions));
+      //### modify
+      //currently we only support the class implemented Quantifiable
+      //Note that the actual map output size is [key length] + 1 + [value length] + 1
+      //map output format: [key size] [key] [value size] [value]
+      //the key size and value size are both 1 byte
+      int partitionerNumber = partitioner.getPartition(key, value, partitions);
+      if(openflowEnabled && key instanceof Quantifiable && value instanceof Quantifiable) {
+        //get the size of key and value
+        Quantifiable quantifiableKey = (Quantifiable)key;
+        Quantifiable quantifiableValue = (Quantifiable)value;
+        int currentMappingKeyOutputSize = quantifiableKey.getContentSize() + 1;
+        int currentMappingValueOutputSize = quantifiableValue.getContentSize() + 1;
+        int currentMappingOutputSize = currentMappingKeyOutputSize + currentMappingValueOutputSize;
+
+        //add the size into openflowMapReduceInformation
+        openflowLock.lock();
+        if(!openflowMapReduceInformation.containsKey(partitionerNumber) ||
+            openflowMapReduceInformation.get(partitionerNumber) == null)
+          openflowMapReduceInformation.put(partitionerNumber, 0);
+
+        int mapOutputSize = openflowMapReduceInformation.get(partitionerNumber);
+        openflowMapReduceInformation.put(partitionerNumber, mapOutputSize + currentMappingOutputSize);
+        openflowLock.unlock();
+/*      LOG.info("### currentMappingOutputSize is " + Integer.toString(currentMappingOutputSize) +
+                ", currentKeySize is " + Integer.toString(currentMappingKeyOutputSize) +
+                ", currentValueSize is " + Integer.toString(currentMappingValueOutputSize) +
+                ", mapOutputSize is " + Integer.toString(mapOutputSize) +
+                ", currentTotal is " + Integer.toString(mapOutputSize + currentMappingOutputSize));*/
+      }
+      //
+      collector.collect(key, value, partitionerNumber);
     }
 
     @Override

@@ -60,8 +60,8 @@ public class WordCount {
 
     job.setMapperClass(TokenizerMapper.class);
     job.setReducerClass(IntSumReducer.class);
-	job.setNumReduceTasks(8);
-	job.setNumReduceTasks(8);
+	job.setNumReduceTasks(10);
+	job.setNumReduceTasks(4);
 	job.setReduceSpeculativeExecution(false);
 
     job.setOutputKeyClass(Text.class);

@@ -1913,7 +1913,20 @@ public class JobConf extends Configuration {
                 + " and " + JobConf.MAPRED_JOB_REDUCE_MEMORY_MB_PROPERTY);
     }
   }
-  
 
+  //### modify
+  public boolean getOpenFlowEnabled() {
+    return getBoolean("mapred.openflow.enabled", false);
+  }
+  public void setOpenFlowEnabled(boolean enabled) {
+    setBoolean("mapred.openflow.enabled", enabled);
+  }
+  public String getOpenFlowController() {
+    return get("mapred.openflow.controller");
+  }
+  public void setOpenFlowController(String controllerIP) {
+    set("mapred.openflow.controller", controllerIP);
+  }
+  //  
 }
 
