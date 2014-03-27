@@ -7,6 +7,7 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.EOFException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -20,7 +21,7 @@ public class OpenFlowCommunicateClient extends Thread {
         LogFactory.getLog(OpenFlowCommunicateClient.class.getName());
 
     private static enum HadoopToControllerCommand {
-        ERROR(-1), EXIT(0), MR_JOB_CONTENT(1);
+        ERROR(-1), EOF(0), EXIT(1), MR_JOB_CONTENT(2);
 
         private int commandNum;
         HadoopToControllerCommand(int commandNum) {
@@ -37,7 +38,7 @@ public class OpenFlowCommunicateClient extends Thread {
         }
     };
     private static enum ControllerToHadoopCommand {
-        ERROR(-1), EXIT(0), TOPO_CONTENT(1);
+        ERROR(-1), EOF(0), EXIT(1), TOPO_CONTENT(2);
 
         private int commandNum;
         ControllerToHadoopCommand(int commandNum) {
@@ -85,12 +86,6 @@ public class OpenFlowCommunicateClient extends Thread {
         clientSocket = new Socket();
         serverAddress = new InetSocketAddress(controllerIP, controllerPort);
         isConnected = new AtomicBoolean(false);
-    }
-    public OpenFlowCommunicateClient(String controllerIP) {
-        this(controllerIP, DEFAULT_CONTROLLER_PORT);
-    }
-    public OpenFlowCommunicateClient(int controllerPort) {
-        this(DEFAULT_CONTROLLER_IP, controllerPort);
     }
 
     ///////////////////////
@@ -149,12 +144,14 @@ public class OpenFlowCommunicateClient extends Thread {
         }
     }
     private void keepReceivingMessageFromController() {
+        LOG.info("### connection setup, keep receiving message from controller");
         mainReceivingLoop:
         while(true) {
             ControllerToHadoopCommand receiveCommand = readCommandFromController();
 
             switch(receiveCommand) {
                 case EXIT:
+                case EOF:
                     break mainReceivingLoop;
                 case TOPO_CONTENT:
                     readTopologyInfoFromController();
@@ -178,6 +175,8 @@ public class OpenFlowCommunicateClient extends Thread {
         try {
             int receiveCommandNum = in.readInt();
             return ControllerToHadoopCommand.getControllerToHadoopCommand(receiveCommandNum);
+        } catch(EOFException e) {
+            return ControllerToHadoopCommand.EOF;
         } catch(IOException e) {
             return ControllerToHadoopCommand.ERROR;
         }

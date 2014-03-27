@@ -1922,10 +1922,16 @@ public class JobConf extends Configuration {
     setBoolean("mapred.openflow.enabled", enabled);
   }
   public String getOpenFlowController() {
-    return get("mapred.openflow.controller");
+    return get("mapred.openflow.controller", "192.168.3.20");
   }
   public void setOpenFlowController(String controllerIP) {
     set("mapred.openflow.controller", controllerIP);
+  }
+  public int getOpenFlowControllerPort() {
+    return getInt("mapred.openflow.controllerPort", 5799);
+  }
+  public void setOpenFlowControllerPort(int port) {
+    setInt("mapred.openflow.controllerPort", port);
   }
   //  
 }

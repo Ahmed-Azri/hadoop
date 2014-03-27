@@ -282,6 +282,10 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
   
   private Thread hdfsMonitor;
 
+  //### modify
+  private OpenFlowCommunicateClient openflowClient;
+  //
+
   /**
    * Start the JobTracker with given configuration.
    * 
@@ -2226,6 +2230,15 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
     this.numTaskCacheLevels = conf.getInt("mapred.task.cache.levels", 
         NetworkTopology.DEFAULT_HOST_LEVEL);
 
+    //### modify
+    if(conf.getOpenFlowEnabled()) {
+      String controllerIP = conf.getOpenFlowController();
+      int controllerPort = conf.getOpenFlowControllerPort();
+      openflowClient = new OpenFlowCommunicateClient(controllerIP, controllerPort);
+      openflowClient.start();
+      LOG.info("### start openflowClient");
+    }
+    //
   }
 
   private static SimpleDateFormat getDateFormat() {
