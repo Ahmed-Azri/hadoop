@@ -112,8 +112,10 @@ public class OpenFlowCommunicateClient extends Thread {
     public void run() {
         //TODO: need to process close state
         tryConnectToController();
-        if(isConnectedToController())
+        if(isConnectedToController()) {
             keepReceivingMessageFromController();
+            closeConnection();
+        }
     }
     private void tryConnectToController() {
         while(true) {
@@ -147,19 +149,26 @@ public class OpenFlowCommunicateClient extends Thread {
         LOG.info("### connection setup, keep receiving message from controller");
         mainReceivingLoop:
         while(true) {
-            ControllerToHadoopCommand receiveCommand = readCommandFromController();
+            try {
+                ControllerToHadoopCommand receiveCommand = readCommandFromController();
 
-            switch(receiveCommand) {
-                case EXIT:
-                case EOF:
-                    break mainReceivingLoop;
-                case TOPO_CONTENT:
-                    readTopologyInfoFromController();
-                    break;
-                default:
-                    LOG.info("### ControllerToHadoopCommand error in OpenFlowCommunicateClient");
+                switch(receiveCommand) {
+                    case EXIT:
+                    case EOF:
+                        break mainReceivingLoop;
+                    case TOPO_CONTENT:
+                        readTopologyInfoFromController();
+                        break;
+                    default:
+                        LOG.info("### ControllerToHadoopCommand error in OpenFlowCommunicateClient");
+                }
+            } catch(IOException e) {
+                LOG.error("IOException in openflow client", e);
+                break;
             }
         }
+    }
+    private void closeConnection() {
         try {
             clientSocket.close();
         } catch(IOException e) {
@@ -171,25 +180,19 @@ public class OpenFlowCommunicateClient extends Thread {
             out = null;
         }
     }
-    private ControllerToHadoopCommand readCommandFromController() {
+    private ControllerToHadoopCommand readCommandFromController() throws IOException {
         try {
             int receiveCommandNum = in.readInt();
             return ControllerToHadoopCommand.getControllerToHadoopCommand(receiveCommandNum);
         } catch(EOFException e) {
             return ControllerToHadoopCommand.EOF;
-        } catch(IOException e) {
-            return ControllerToHadoopCommand.ERROR;
         }
     }
-    private void readTopologyInfoFromController() {
-        try {
-            TopologyInfo newTopologyInfo = new TopologyInfo();
-            newTopologyInfo.readFields(in);
+    private void readTopologyInfoFromController() throws IOException {
+        TopologyInfo newTopologyInfo = new TopologyInfo();
+        newTopologyInfo.readFields(in);
 
-            topologyInfo.set(newTopologyInfo);
-        } catch(IOException e) {
-            //do nothing
-        }
+        topologyInfo.set(newTopologyInfo);
     }
     public void sendMRJobInfoToController() {
 
