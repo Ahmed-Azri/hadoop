@@ -192,7 +192,7 @@ public class OpenFlowCommunicateClient extends Thread {
             //do nothing
         }
     }
-    public sendMRJobInfoToController() {
+    public void sendMRJobInfoToController() {
 
     }
 }

@@ -193,4 +193,23 @@ class WritableUtilForMRJob {
         }
         return bytes;
     }
+    public static String decode(byte[] utf8) throws CharacterCodingException {
+        return decode(ByteBuffer.wrap(utf8), true);
+    }
+    private static String decode(ByteBuffer utf8, boolean replace)
+      throws CharacterCodingException {
+        CharsetDecoder decoder = DECODER_FACTORY.get();
+        if(replace) {
+            decoder.onMalformedInput(
+              java.nio.charset.CodingErrorAction.REPLACE);
+            decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+        }
+        String str = decoder.decode(utf8).toString();
+        // set decoder back to its default value: REPORT
+        if(replace) {
+            decoder.onMalformedInput(CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+        }
+        return str;
+    }
 }
