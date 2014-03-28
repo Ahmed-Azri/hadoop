@@ -20,48 +20,9 @@ public class OpenFlowCommunicateClient extends Thread {
     static final Log LOG =
         LogFactory.getLog(OpenFlowCommunicateClient.class.getName());
 
-    private static enum HadoopToControllerCommand {
-        ERROR(-1), EOF(0), EXIT(1), MR_JOB_CONTENT(2);
-
-        private int commandNum;
-        HadoopToControllerCommand(int commandNum) {
-            this.commandNum = commandNum;
-        }
-        public int getCommandNum() {
-            return commandNum;
-        }
-        public static HadoopToControllerCommand getHadoopToControllerCommand(int commandNum) {
-            for(HadoopToControllerCommand command : HadoopToControllerCommand.values())
-                if(command.getCommandNum() == commandNum)
-                    return command;
-            return ERROR;
-        }
-    };
-    private static enum ControllerToHadoopCommand {
-        ERROR(-1), EOF(0), EXIT(1), TOPO_CONTENT(2);
-
-        private int commandNum;
-        ControllerToHadoopCommand(int commandNum) {
-            this.commandNum = commandNum;
-        }
-        public int getCommandNum() {
-            return commandNum;
-        }
-        public static ControllerToHadoopCommand getControllerToHadoopCommand(int commandNum) {
-            for(ControllerToHadoopCommand command : ControllerToHadoopCommand.values())
-                if(command.getCommandNum() == commandNum)
-                    return command;
-            return ERROR;
-        }
-    };
-
     ////////////
     // Fields //
     ////////////
-
-    private final static int DEFAULT_CONTROLLER_PORT = 5799;
-    private final static String DEFAULT_CONTROLLER_IP = "192.168.3.20";
-
     private int controllerPort;
     private String controllerIP;
     private Socket clientSocket;
@@ -92,7 +53,7 @@ public class OpenFlowCommunicateClient extends Thread {
     // getter and setter //
     ///////////////////////
     public TopologyInfo getTopologyInfo() {
-        TopologyInfo currentTopologyInfo = topologyInfo.getAndSet(null);
+        TopologyInfo currentTopologyInfo = topologyInfo.get();
         return currentTopologyInfo;
     }
     public boolean isConnectedToController() {
@@ -183,7 +144,7 @@ public class OpenFlowCommunicateClient extends Thread {
     private ControllerToHadoopCommand readCommandFromController() throws IOException {
         try {
             int receiveCommandNum = in.readInt();
-            return ControllerToHadoopCommand.getControllerToHadoopCommand(receiveCommandNum);
+            return ControllerToHadoopCommand.lookup(receiveCommandNum);
         } catch(EOFException e) {
             return ControllerToHadoopCommand.EOF;
         }
@@ -194,7 +155,8 @@ public class OpenFlowCommunicateClient extends Thread {
 
         topologyInfo.set(newTopologyInfo);
     }
-    public void sendMRJobInfoToController() {
-
+    public void sendMRJobInfoToController(MRJobInfo mrJobInfo) throws IOException {
+        out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());
+        mrJobInfo.write(out);
     }
 }

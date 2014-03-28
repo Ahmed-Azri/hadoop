@@ -1,4 +1,4 @@
-package org.apache.hadoop.mapred;
+package net.floodlightcontroller.ecmp;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -16,70 +16,52 @@ import java.nio.charset.MalformedInputException;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 
-import org.apache.hadoop.io.Writable;
-
-class MRJobInfo implements Writable {
-    private int jobNum;
-    private Map<String, MRJobStatusInfo> jobStatusInfoList;
+class MRJobInfo {
+    public String jobId;
+    public int totalMapperNum;
+    public int totalReducerNum;
+    public MRPhase phase;
+    public int mapperToReducerInfoNum;
+    public Map<HostPair, Integer> mapperToReducerInfo;
 
     public MRJobInfo() {
-        jobNum = 0;
-        jobStatusInfoList = new HashMap<String, MRJobStatusInfo>();
-    }
-    public int getJobNum() {
-        return jobNum;
-    }
-    public Map<String, MRJobStatusInfo> getJobStatusInfoList() {
-        return jobStatusInfoList;
-    }
-    public MRJobStatusInfo getMRJobStatus(String taskid) {
-        return jobStatusInfoList.get(taskid);
-    }
-    public void addMRJobStatusInfo() {
-
-    }
-    @Override
-    public void write(DataOutput out) throws IOException {
-        out.writeInt(jobNum);
-        for(String jobId : jobStatusInfoList.keySet()) {
-            WritableUtilForMRJob.writeString(out, jobId);
-            MRJobStatusInfo jsi = jobStatusInfoList.get(jobId);
-            jsi.write(out);
-        }
-    }
-    @Override
-    public void readFields(DataInput in) throws IOException {
-        jobNum = in.readInt();
-        for(int i=0; i < jobNum; ++i) {
-            String jobId = WritableUtilForMRJob.readString(in);
-            MRJobStatusInfo jsi = new MRJobStatusInfo();
-            jsi.readFields(in);
-        }
-    }
-}
-
-class MRJobStatusInfo implements Writable {
-    private int totalMapperNum;
-    private int totalReducerNum;
-    public MRJobStatusInfo() {
+        jobId = null;
         totalMapperNum = 0;
         totalReducerNum = 0;
+        phase = Phase.STARTING;
+        mapperToReducerInfo = new HashMap<HostPair, Integer>();
     }
-    public int getTotalMapperNum() {
-        return totalMapperNum;
-    }
-    public int getTotalReducerNum() {
-        return totalReducerNum;
-    }
-    @Override
     public void write(DataOutput out) throws IOException {
+        WritableUtilForMRJob.writeString(out, jobId);
         out.writeInt(totalMapperNum);
         out.writeInt(totalReducerNum);
+        out.writeInt(phase.getNum());
+
+        mapperToReducerInfoNum = mapperToReducerInfo.size();
+        out.writeInt(mapperToReducerInfoNum);
+        for(HostPair mapperToReducerPair : mapperToReducerInfo.keySet()) {
+            int transmitSize = mapperToReducerInfo.get(mapperToReducerPair);
+
+            out.writeInt(mapperToReducerPair.first.intValue());
+            out.writeInt(mapperToReducerPair.secondintValue());
+            out.writeInt(transmitSize);
+        }
     }
-    @Override
     public void readFields(DataInput in) throws IOException {
+        jobId = WritableUtilForMRJob.readString(in);
         totalMapperNum = in.readInt();
         totalReducerNum = in.readInt();
+        phase = MRPhase.lookup(in.readInt());
+        mapperToReducerInfoNum = in.readInt();
+
+        mapperToReducerInfo.clear();
+        for(int i=0; i<mapperToReducerInfoNum; i++) {
+            Integer mapper = in.readInt();
+            Integer reducer = in.readInt();
+            int transmitSize = in.readInt();
+            HostPair mapperToReducerPair = new HostPair(mapper, reducer);
+            mapperToReducerInfo.put(mapperToReducerPair, transmitSize);
+        }
     }
 }
 
