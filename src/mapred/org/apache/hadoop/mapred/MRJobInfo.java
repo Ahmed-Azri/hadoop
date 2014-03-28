@@ -1,4 +1,4 @@
-package net.floodlightcontroller.ecmp;
+package org.apache.hadoop.mapred;
 
 import java.util.Map;
 import java.util.HashMap;
