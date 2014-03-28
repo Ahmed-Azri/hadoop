@@ -1,6 +1,6 @@
-package org.apache.hadoop.mapred;
+package org.apache.hadoop.mapred.hadoop;
 
-class Pair<A, B> implements Comparable<Pair<A, B>>
+public class Pair<A, B> implements Comparable<Pair<A, B>>
 {
     public A first;
     public B second;
