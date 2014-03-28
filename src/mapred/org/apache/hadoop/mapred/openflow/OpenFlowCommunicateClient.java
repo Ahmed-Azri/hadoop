@@ -1,4 +1,4 @@
-package org.apache.hadoop.mapred;
+package org.apache.hadoop.mapred.openflow;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;

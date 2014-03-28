@@ -1,10 +1,8 @@
-package org.apache.hadoop.mapred;
+package org.apache.hadoop.mapred.openflow;
 
 import java.io.IOException;
 import java.io.DataInput;
 import java.io.DataOutput;
-
-import org.apache.hadoop.io.Writable;
 
 public class HostPair {
     private Pair<Integer, Integer> hostPair;
@@ -12,9 +10,8 @@ public class HostPair {
         this(0, 0);
     }
     public HostPair(String host1, String host2) {
-        Integer host1Int = IPv4AddressConverter.toIPv4Address(host1);
-        Integer host2Int = IPv4AddressConverter.toIPv4Address(host2);
-        this(host1Int, host2Int);
+        this(IPv4AddressConverter.toIPv4Address(host1), 
+             IPv4AddressConverter.toIPv4Address(host2));
     }
     public HostPair(Integer host1, Integer host2) {
         this(new Pair<Integer, Integer>(host1, host2));
@@ -24,6 +21,12 @@ public class HostPair {
     }
     public Pair<Integer, Integer> getHostPairInt() {
         return hostPair;
+    }
+    public Integer getFirstHost() {
+        return hostPair.first;
+    }
+    public Integer getSecondHost() {
+        return hostPair.second;
     }
     public Pair<String, String> getHostPairString() {
         String host1 = IPv4AddressConverter.fromIPv4Address(hostPair.first.intValue());

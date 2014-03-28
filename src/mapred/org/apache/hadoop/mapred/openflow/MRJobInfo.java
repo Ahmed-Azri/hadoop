@@ -1,4 +1,4 @@
-package org.apache.hadoop.mapred;
+package org.apache.hadoop.mapred.openflow;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ class MRJobInfo {
         jobId = null;
         totalMapperNum = 0;
         totalReducerNum = 0;
-        phase = Phase.STARTING;
+        phase = MRPhase.STARTING;
         mapperToReducerInfo = new HashMap<HostPair, Integer>();
     }
     public void write(DataOutput out) throws IOException {
@@ -42,8 +42,10 @@ class MRJobInfo {
         for(HostPair mapperToReducerPair : mapperToReducerInfo.keySet()) {
             int transmitSize = mapperToReducerInfo.get(mapperToReducerPair);
 
-            out.writeInt(mapperToReducerPair.first.intValue());
-            out.writeInt(mapperToReducerPair.secondintValue());
+            Integer firstHost = mapperToReducerPair.getFirstHost();
+            Integer secondHost = mapperToReducerPair.getSecondHost();
+            out.writeInt(firstHost.intValue());
+            out.writeInt(secondHost.intValue());
             out.writeInt(transmitSize);
         }
     }
