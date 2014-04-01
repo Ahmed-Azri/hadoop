@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.EOFException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.commons.logging.Log;
@@ -147,7 +148,9 @@ public class OpenFlowCommunicateClient extends Thread {
             return ControllerToHadoopCommand.lookup(receiveCommandNum);
         } catch(EOFException e) {
             return ControllerToHadoopCommand.EOF;
-        }
+        } catch(SocketException e) {
+			return ControllerToHadoopCommand.EOF;
+		}
     }
     private void readTopologyInfoFromController() throws IOException {
         TopologyInfo newTopologyInfo = new TopologyInfo();
