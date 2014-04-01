@@ -10,8 +10,8 @@ Automatically created by Apache Jakarta Tomcat JspC.
 
 
     <servlet>
-        <servlet-name>org.apache.hadoop.hdfs.server.namenode.nn_005fbrowsedfscontent_jsp</servlet-name>
-        <servlet-class>org.apache.hadoop.hdfs.server.namenode.nn_005fbrowsedfscontent_jsp</servlet-class>
+        <servlet-name>org.apache.hadoop.hdfs.server.namenode.dfshealth_jsp</servlet-name>
+        <servlet-class>org.apache.hadoop.hdfs.server.namenode.dfshealth_jsp</servlet-class>
     </servlet>
 
     <servlet>
@@ -20,18 +20,18 @@ Automatically created by Apache Jakarta Tomcat JspC.
     </servlet>
 
     <servlet>
-        <servlet-name>org.apache.hadoop.hdfs.server.namenode.dfshealth_jsp</servlet-name>
-        <servlet-class>org.apache.hadoop.hdfs.server.namenode.dfshealth_jsp</servlet-class>
-    </servlet>
-
-    <servlet>
         <servlet-name>org.apache.hadoop.hdfs.server.namenode.dfsnodelist_jsp</servlet-name>
         <servlet-class>org.apache.hadoop.hdfs.server.namenode.dfsnodelist_jsp</servlet-class>
     </servlet>
 
-    <servlet-mapping>
+    <servlet>
         <servlet-name>org.apache.hadoop.hdfs.server.namenode.nn_005fbrowsedfscontent_jsp</servlet-name>
-        <url-pattern>/nn_browsedfscontent.jsp</url-pattern>
+        <servlet-class>org.apache.hadoop.hdfs.server.namenode.nn_005fbrowsedfscontent_jsp</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>org.apache.hadoop.hdfs.server.namenode.dfshealth_jsp</servlet-name>
+        <url-pattern>/dfshealth.jsp</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
@@ -40,13 +40,13 @@ Automatically created by Apache Jakarta Tomcat JspC.
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>org.apache.hadoop.hdfs.server.namenode.dfshealth_jsp</servlet-name>
-        <url-pattern>/dfshealth.jsp</url-pattern>
+        <servlet-name>org.apache.hadoop.hdfs.server.namenode.dfsnodelist_jsp</servlet-name>
+        <url-pattern>/dfsnodelist.jsp</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>org.apache.hadoop.hdfs.server.namenode.dfsnodelist_jsp</servlet-name>
-        <url-pattern>/dfsnodelist.jsp</url-pattern>
+        <servlet-name>org.apache.hadoop.hdfs.server.namenode.nn_005fbrowsedfscontent_jsp</servlet-name>
+        <url-pattern>/nn_browsedfscontent.jsp</url-pattern>
     </servlet-mapping>
 
 </web-app>
