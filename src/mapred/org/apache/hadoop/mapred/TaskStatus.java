@@ -110,7 +110,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
   public String getStateString() { return stateString; }
   public void setStateString(String stateString) { this.stateString = stateString; }
  
-  //## modify
+  //### modify
   public void setSerialNumber(int serialNumber) {
     this.serialNumber = serialNumber;
   }

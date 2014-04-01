@@ -4,17 +4,21 @@ import java.io.IOException;
 import java.io.DataInput;
 import java.io.DataOutput;
 
-public class HostPair {
+public abstract class HostPair {
     private Pair<Integer, Integer> hostPair;
-    public HostPair() {
-        this(0, 0);
+    public HostPair(boolean isDirected) {
+        this(0, 0, isDirected);
     }
-    public HostPair(String host1, String host2) {
-        this(IPv4AddressConverter.toIPv4Address(host1), 
-             IPv4AddressConverter.toIPv4Address(host2));
+    public HostPair(String host1, String host2, boolean isDirected) {
+		this(IPv4AddressConverter.toIPv4Address(host1), 
+			 IPv4AddressConverter.toIPv4Address(host2),
+             isDirected);
     }
-    public HostPair(Integer host1, Integer host2) {
-        this(new Pair<Integer, Integer>(host1, host2));
+    public HostPair(Integer host1, Integer host2, boolean isDirected) {
+        if(isDirected)
+            this.hostPair = new Pair<Integer, Integer>(host1, host2);
+        else
+            this.hostPair = new UndirectedPair<Integer, Integer>(host1, host2);
     }
     public HostPair(Pair<Integer, Integer> hostPair) {
         this.hostPair = hostPair;
@@ -22,16 +26,17 @@ public class HostPair {
     public Pair<Integer, Integer> getHostPairInt() {
         return hostPair;
     }
-    public Integer getFirstHost() {
-        return hostPair.first;
+	public Integer getFirstHost() {
+		return hostPair.first;
+	}
+	public Integer getSecondHost() {
+		return hostPair.second;
+	}
+    public String getFirstHostString() {
+        return IPv4AddressConverter.fromIPv4Address(hostPair.first.intValue());
     }
-    public Integer getSecondHost() {
-        return hostPair.second;
-    }
-    public Pair<String, String> getHostPairString() {
-        String host1 = IPv4AddressConverter.fromIPv4Address(hostPair.first.intValue());
-        String host2 = IPv4AddressConverter.fromIPv4Address(hostPair.second.intValue());
-        return new Pair<String, String>(host1, host2);
+    public String getSecondHostString() {
+        return IPv4AddressConverter.fromIPv4Address(hostPair.second.intValue());
     }
     public void write(DataOutput out) throws IOException {
         out.writeInt(hostPair.first.intValue());
@@ -43,6 +48,7 @@ public class HostPair {
     }
 }
 
+//all copy from net.floodlightcontroller.packet.IPv4
 class IPv4AddressConverter {
     public static String fromIPv4Address(int ipAddress) {
         StringBuffer sb = new StringBuffer();

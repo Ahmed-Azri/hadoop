@@ -31,7 +31,7 @@ public class OpenFlowCommunicateClient extends Thread {
     private DataInput in;
     private DataOutput out;
 
-    private AtomicReference<TopologyInfo> topologyInfo;
+    private TopologyInfo topologyInfo;
 
     /////////////////
     // Constructor //
@@ -42,7 +42,7 @@ public class OpenFlowCommunicateClient extends Thread {
         in = null;
         out = null;
 
-        topologyInfo = new AtomicReference<TopologyInfo>(null);
+        topologyInfo = null;
 
         clientSocket = new Socket();
         serverAddress = new InetSocketAddress(controllerIP, controllerPort);
@@ -53,7 +53,7 @@ public class OpenFlowCommunicateClient extends Thread {
     // getter and setter //
     ///////////////////////
     public TopologyInfo getTopologyInfo() {
-        TopologyInfo currentTopologyInfo = topologyInfo.get();
+        TopologyInfo currentTopologyInfo = topologyInfo;
         return currentTopologyInfo;
     }
     public boolean isConnectedToController() {
@@ -153,7 +153,7 @@ public class OpenFlowCommunicateClient extends Thread {
         TopologyInfo newTopologyInfo = new TopologyInfo();
         newTopologyInfo.readFields(in);
 
-        topologyInfo.set(newTopologyInfo);
+        topologyInfo =  newTopologyInfo;
     }
     public void sendMRJobInfoToController(MRJobInfo mrJobInfo) throws IOException {
         out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());

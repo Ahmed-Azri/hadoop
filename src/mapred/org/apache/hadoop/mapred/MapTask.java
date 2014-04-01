@@ -704,10 +704,11 @@ class MapTask extends Task {
     @Override
     public void write(K key, V value) throws IOException, InterruptedException {
       //### modify
-      //currently we only support the class implemented Quantifiable
-      //Note that the actual map output size is [key length] + 1 + [value length] + 1
-      //map output format: [key size] [key] [value size] [value]
-      //the key size and value size are both 1 byte
+      /* currently we only support the class implemented Quantifiable
+       * Note that the actual map output size is [key length] + 1 + [value length] + 1
+       * map output format: [key size] [key] [value size] [value]
+       * the key size and value size are both 1 byte
+	   */
       int partitionerNumber = partitioner.getPartition(key, value, partitions);
       if(openflowEnabled && key instanceof Quantifiable && value instanceof Quantifiable) {
         //get the size of key and value

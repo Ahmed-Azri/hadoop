@@ -683,12 +683,12 @@ abstract public class Task implements Writable, Configurable {
           if (sendProgress) {
             // we need to send progress update
             updateCounters();
-			//### modify
-			if(!openflowEnabled) {
+            //### modify
+            if(!openflowEnabled) {
               taskStatus.statusUpdate(taskProgress.get(),
                                       taskProgress.toString(), 
                                       counters);
-			}
+            }
             else {
               openflowLock.lock();
               taskStatus.statusUpdate(taskProgress.get(),

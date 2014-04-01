@@ -16,22 +16,25 @@ import java.nio.charset.MalformedInputException;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 
-class MRJobInfo {
+public class MRJobInfo {
+	public long serialNum;
     public String jobId;
     public int totalMapperNum;
     public int totalReducerNum;
     public MRPhase phase;
     public int mapperToReducerInfoNum;
-    public Map<HostPair, Integer> mapperToReducerInfo;
+    public Map<SenderReceiverPair, Integer> mapperToReducerInfo;
 
     public MRJobInfo() {
+		serialNum = 0;
         jobId = null;
         totalMapperNum = 0;
         totalReducerNum = 0;
         phase = MRPhase.STARTING;
-        mapperToReducerInfo = new HashMap<HostPair, Integer>();
+        mapperToReducerInfo = new HashMap<SenderReceiverPair, Integer>();
     }
     public void write(DataOutput out) throws IOException {
+		out.writeLong(serialNum);
         WritableUtilForMRJob.writeString(out, jobId);
         out.writeInt(totalMapperNum);
         out.writeInt(totalReducerNum);
@@ -39,7 +42,7 @@ class MRJobInfo {
 
         mapperToReducerInfoNum = mapperToReducerInfo.size();
         out.writeInt(mapperToReducerInfoNum);
-        for(HostPair mapperToReducerPair : mapperToReducerInfo.keySet()) {
+        for(SenderReceiverPair mapperToReducerPair : mapperToReducerInfo.keySet()) {
             int transmitSize = mapperToReducerInfo.get(mapperToReducerPair);
 
             Integer firstHost = mapperToReducerPair.getFirstHost();
@@ -50,6 +53,7 @@ class MRJobInfo {
         }
     }
     public void readFields(DataInput in) throws IOException {
+		serialNum = in.readLong();
         jobId = WritableUtilForMRJob.readString(in);
         totalMapperNum = in.readInt();
         totalReducerNum = in.readInt();
@@ -61,7 +65,7 @@ class MRJobInfo {
             Integer mapper = in.readInt();
             Integer reducer = in.readInt();
             int transmitSize = in.readInt();
-            HostPair mapperToReducerPair = new HostPair(mapper, reducer);
+            SenderReceiverPair mapperToReducerPair = new SenderReceiverPair(mapper, reducer);
             mapperToReducerInfo.put(mapperToReducerPair, transmitSize);
         }
     }
