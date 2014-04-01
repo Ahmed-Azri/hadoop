@@ -46,6 +46,10 @@ public abstract class HostPair {
         hostPair.first = in.readInt();
         hostPair.second = in.readInt();
     }
+	@Override
+	public String toString() {
+		return hostPair.toString();
+	}
 }
 
 //all copy from net.floodlightcontroller.packet.IPv4

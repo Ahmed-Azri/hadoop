@@ -34,4 +34,12 @@ public class TopologyInfo {
             hostDistanceList.put(hdi, dist);
         }
     }
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("dist num: " + hostDistanceNumber);
+		for(UndirectedHostPair uhp : hostDistanceList.keySet())
+			sb.append(" , [" + uhp + "," + hostDistanceList.get(uhp) + "]");
+		return sb.toString();
+	}
 }
