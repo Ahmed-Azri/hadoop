@@ -66,7 +66,7 @@ public abstract class HostPair implements Comparable<HostPair> {
 			return false;
 
 		HostPair hp = (HostPair) obj;
-		return hostPair.equals(hp);
+		return hostPair.equals(hp.hostPair);
 	}
 	@Override
 	public String toString() {
