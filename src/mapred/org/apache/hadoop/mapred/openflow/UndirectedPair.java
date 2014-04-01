@@ -10,7 +10,7 @@ public class UndirectedPair<A, B> extends Pair<A, B> {
 	}
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof Pair))
+        if(!(obj instanceof UndirectedPair))
             return false;
         if(this == obj)
             return true;

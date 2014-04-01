@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.DataInput;
 import java.io.DataOutput;
 
-public abstract class HostPair {
+public abstract class HostPair implements Comparable<HostPair> {
     private Pair<Integer, Integer> hostPair;
     public HostPair(boolean isDirected) {
         this(0, 0, isDirected);
@@ -46,6 +46,28 @@ public abstract class HostPair {
         hostPair.first = in.readInt();
         hostPair.second = in.readInt();
     }
+	@Override
+	public int compareTo(HostPair hp) {
+		if(hp == null)
+			return 1;
+		return hostPair.compareTo(hp.hostPair);
+	}
+	@Override
+	public int hashCode() {
+		return hostPair.hashCode();
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof HostPair))
+			return false;
+		if(this == obj)
+			return true;
+		if(obj == null)
+			return false;
+
+		HostPair hp = (HostPair) obj;
+		return hostPair.equals(hp);
+	}
 	@Override
 	public String toString() {
 		return hostPair.toString();
