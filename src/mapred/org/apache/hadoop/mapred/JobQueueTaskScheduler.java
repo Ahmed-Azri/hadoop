@@ -223,7 +223,6 @@ class JobQueueTaskScheduler extends TaskScheduler {
     if (availableReduceSlots > 0) {
       exceededReducePadding = exceededPadding(false, clusterStatus, 
                                               trackerReduceCapacity);
-	  LOG.info("### assign reducer, exceededReducePadding is " + exceededReducePadding);
       synchronized (jobQueue) {
         for (JobInProgress job : jobQueue) {
           if (job.getStatus().getRunState() != JobStatus.RUNNING ||

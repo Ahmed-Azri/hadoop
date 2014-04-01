@@ -153,6 +153,10 @@ public class OpenFlowCommunicateClient extends Thread {
         TopologyInfo newTopologyInfo = new TopologyInfo();
         newTopologyInfo.readFields(in);
 
+		//###
+		LOG.info("### read new topology: " + newTopologyInfo);
+		//
+
         topologyInfo =  newTopologyInfo;
     }
     public void sendMRJobInfoToController(MRJobInfo mrJobInfo) throws IOException {
