@@ -1,4 +1,4 @@
-package org.apache.hadoop.mapred.openflow;
+package net.floodlightcontroller.ecmp.hadoop;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -16,17 +16,51 @@ import java.nio.charset.MalformedInputException;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 
-public class MRJobInfo {
-	public long serialNum;
+public class MRJobInfoList {
+    public long serialNum;
+    public int mrJobInfoNum;
+    public Map<String, MRJobInfo> mrJobInfoList;
+
+    public MRJobInfoList() {
+        serialNum = 0;
+        mrJobInfoNum = 0;
+        mrJobInfoList = new HashMap<String, MRJobInfo>();
+    }
+    public void write(DataOutput out) throws IOException {
+        out.writeLong(serialNum);
+
+        mrJobInfoNum = mrJobInfoList.size();
+
+        out.writeInt(mrJobInfoNum);
+        for(String jobId : mrJobInfoList.keySet())
+            mrJobInfoList.get(jobId).write(out);
+    }
+    public void readFields(DataInput in) throws IOException {
+        serialNum = in.readLong();
+        mrJobInfoNum = in.readInt();
+
+        mrJobInfoList.clear();
+        for(int i=0; i < mrJobInfoNum; ++i) {
+            MRJobInfo mrJobInfo = new MRJobInfo();
+            mrJobInfo.readFields(in);
+            mrJobInfoList.put(mrJobInfo.jobId, mrJobInfo);
+        }
+    }
+}
+
+class MRJobInfo {
     public String jobId;
     public int totalMapperNum;
     public int totalReducerNum;
+
+    // STARTING, MAP, SHUFFLE, SORT, REDUCE, CLEANUP
     public MRPhase phase;
     public int mapperToReducerInfoNum;
+    // in MAP phase, key: [mapper ip, reducer id] -> size
+    // in SHUFFLE phase, key: [mapper ip, reducer ip] -> data size that has not sent
     public Map<SenderReceiverPair, Integer> mapperToReducerInfo;
 
     public MRJobInfo() {
-		serialNum = 0;
         jobId = null;
         totalMapperNum = 0;
         totalReducerNum = 0;
@@ -34,7 +68,6 @@ public class MRJobInfo {
         mapperToReducerInfo = new HashMap<SenderReceiverPair, Integer>();
     }
     public void write(DataOutput out) throws IOException {
-		out.writeLong(serialNum);
         WritableUtilForMRJob.writeString(out, jobId);
         out.writeInt(totalMapperNum);
         out.writeInt(totalReducerNum);
@@ -53,7 +86,6 @@ public class MRJobInfo {
         }
     }
     public void readFields(DataInput in) throws IOException {
-		serialNum = in.readLong();
         jobId = WritableUtilForMRJob.readString(in);
         totalMapperNum = in.readInt();
         totalReducerNum = in.readInt();
