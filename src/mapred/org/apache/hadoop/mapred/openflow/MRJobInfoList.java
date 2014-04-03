@@ -19,86 +19,34 @@ import java.text.StringCharacterIterator;
 public class MRJobInfoList {
     public long serialNum;
     public int mrJobInfoNum;
-    public Map<String, MRJobInfo> mrJobInfoList;
+    public Map<SenderReceiverPair, Integer> mrJobInfo;
 
     public MRJobInfoList() {
         serialNum = 0;
         mrJobInfoNum = 0;
-        mrJobInfoList = new HashMap<String, MRJobInfo>();
+        mrJobInfo = new HashMap<SenderReceiverPair, Integer>();
     }
     public void write(DataOutput out) throws IOException {
         out.writeLong(serialNum);
 
-        mrJobInfoNum = mrJobInfoList.size();
+        mrJobInfoNum = mrJobInfo.size();
 
         out.writeInt(mrJobInfoNum);
-        for(String jobId : mrJobInfoList.keySet())
-            mrJobInfoList.get(jobId).write(out);
+        for(SenderReceiverPair connection : mrJobInfo.keySet()) {
+            connection.write(out);
+            out.writeInt(mrJobInfo.get(connection).intValue());
+        }
     }
     public void readFields(DataInput in) throws IOException {
         serialNum = in.readLong();
         mrJobInfoNum = in.readInt();
 
-        mrJobInfoList.clear();
-        for(int i=0; i < mrJobInfoNum; ++i) {
-            MRJobInfo mrJobInfo = new MRJobInfo();
-            mrJobInfo.readFields(in);
-            mrJobInfoList.put(mrJobInfo.jobId, mrJobInfo);
-        }
-    }
-}
-
-class MRJobInfo {
-    public String jobId;
-    public int totalMapperNum;
-    public int totalReducerNum;
-
-    // STARTING, MAP, SHUFFLE, SORT, REDUCE, CLEANUP
-    public MRPhase phase;
-    public int mapperToReducerInfoNum;
-    // in MAP phase, key: [mapper ip, reducer id] -> size
-    // in SHUFFLE phase, key: [mapper ip, reducer ip] -> data size that has not sent
-    public Map<SenderReceiverPair, Integer> mapperToReducerInfo;
-
-    public MRJobInfo() {
-        jobId = null;
-        totalMapperNum = 0;
-        totalReducerNum = 0;
-        phase = MRPhase.STARTING;
-        mapperToReducerInfo = new HashMap<SenderReceiverPair, Integer>();
-    }
-    public void write(DataOutput out) throws IOException {
-        WritableUtilForMRJob.writeString(out, jobId);
-        out.writeInt(totalMapperNum);
-        out.writeInt(totalReducerNum);
-        out.writeInt(phase.getNum());
-
-        mapperToReducerInfoNum = mapperToReducerInfo.size();
-        out.writeInt(mapperToReducerInfoNum);
-        for(SenderReceiverPair mapperToReducerPair : mapperToReducerInfo.keySet()) {
-            int transmitSize = mapperToReducerInfo.get(mapperToReducerPair);
-
-            Integer firstHost = mapperToReducerPair.getFirstHost();
-            Integer secondHost = mapperToReducerPair.getSecondHost();
-            out.writeInt(firstHost.intValue());
-            out.writeInt(secondHost.intValue());
-            out.writeInt(transmitSize);
-        }
-    }
-    public void readFields(DataInput in) throws IOException {
-        jobId = WritableUtilForMRJob.readString(in);
-        totalMapperNum = in.readInt();
-        totalReducerNum = in.readInt();
-        phase = MRPhase.lookup(in.readInt());
-        mapperToReducerInfoNum = in.readInt();
-
-        mapperToReducerInfo.clear();
-        for(int i=0; i<mapperToReducerInfoNum; i++) {
-            Integer mapper = in.readInt();
-            Integer reducer = in.readInt();
-            int transmitSize = in.readInt();
-            SenderReceiverPair mapperToReducerPair = new SenderReceiverPair(mapper, reducer);
-            mapperToReducerInfo.put(mapperToReducerPair, transmitSize);
+        mrJobInfo.clear();
+        for(int i=0; i<mrJobInfoNum; ++i) {
+            SenderReceiverPair connection = new SenderReceiverPair();
+            connection.readFields(in);
+            int size = in.readInt();
+            mrJobInfo.put(connection, size);
         }
     }
 }

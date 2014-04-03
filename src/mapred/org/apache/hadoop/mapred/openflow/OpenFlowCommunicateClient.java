@@ -162,8 +162,8 @@ public class OpenFlowCommunicateClient extends Thread {
 
         topologyInfo =  newTopologyInfo;
     }
-    public void sendMRJobInfoToController(MRJobInfo mrJobInfo) throws IOException {
+    public void sendMRJobInfoToController(MRJobInfoList mrJobInfoList) throws IOException {
         out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());
-        mrJobInfo.write(out);
+        mrJobInfoList.write(out);
     }
 }
