@@ -1504,7 +1504,8 @@ class ReduceTask extends Task {
               "Got invalid response code " + rc + " from " + url +
               ": " + connection.getResponseMessage());
         }
-		LOG.info("#### get connection respond from " + mapOutputLoc.taskOutput.getHost());
+		LOG.info("#### get connection respond from " + mapOutputLoc.taskOutput.getHost() +
+				 ", remote port: " + url.getPort());
 
         // Validate header from map output
         TaskAttemptID mapId = null;
