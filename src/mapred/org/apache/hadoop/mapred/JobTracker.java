@@ -114,7 +114,7 @@ import org.mortbay.util.ajax.JSON;
 
 //### modify
 import org.apache.hadoop.mapred.openflow.OpenFlowCommunicateClient;
-import org.apache.hadoop.mapred.openflow.MRJobInfo;
+import org.apache.hadoop.mapred.openflow.MRJobInfoList;
 import org.apache.hadoop.mapred.openflow.TopologyInfo;
 import org.apache.hadoop.mapred.openflow.HostPair;
 //
@@ -3095,13 +3095,14 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
                                                   boolean acceptNewTasks, 
                                                   short responseId) 
     throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Got heartbeat from: " + status.getTrackerName() + 
+//    if (LOG.isDebugEnabled()) {
+      LOG.info("Got heartbeat from: " + status.getTrackerName() + 
+                " host address: " + status.getHostIPAddress() + 
                 " (restarted: " + restarted + 
                 " initialContact: " + initialContact + 
                 " acceptNewTasks: " + acceptNewTasks + ")" +
                 " with responseId: " + responseId);
-    }
+//    }
 
     // Make sure heartbeat is from a tasktracker allowed by the jobtracker.
     if (!acceptTaskTracker(status)) {

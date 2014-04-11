@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
@@ -112,6 +113,8 @@ import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.metrics2.lib.DefaultMetricsSystem;
 import org.apache.hadoop.metrics2.util.MBeans;
 import org.apache.hadoop.security.Credentials;
+
+import org.apache.hadoop.mapred.openflow.InternetUtil;
 
 /*******************************************************
  * TaskTracker is a process that starts and tracks MR Tasks
@@ -240,6 +243,10 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
   String taskTrackerName;
   String localHostname;
   InetSocketAddress jobTrackAddr;
+
+  //### modified
+  int localHostIPAddress;
+  //
     
   InetSocketAddress taskReportAddress;
 
@@ -801,6 +808,15 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
       (fConf.get("mapred.tasktracker.dns.interface","default"),
        fConf.get("mapred.tasktracker.dns.nameserver","default"));
     }
+    //### modified
+    try {
+      InetAddress localHostInetAddress = InetAddress.getByName(this.localHostname);
+      this.localHostIPAddress = InternetUtil.toIPv4Address(localHostInetAddress.getHostAddress());
+    } catch(UnknownHostException e) {
+      //this should not happen
+      LOG.error("get " + this.localHostname + " ip address error", e);
+    }
+    //
 
     final String dirs = localStorage.getDirsString();
     fConf.setStrings(JobConf.MAPRED_LOCAL_DIR_PROPERTY, dirs);
@@ -2004,6 +2020,10 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
     }
     //
     // Xmit the heartbeat
+    //
+
+    //### modified
+    status.setHostIPAddress(localHostIPAddress);
     //
     HeartbeatResponse heartbeatResponse = jobClient.heartbeat(status, 
                                                               justStarted,
