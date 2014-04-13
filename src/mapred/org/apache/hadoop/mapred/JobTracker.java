@@ -294,15 +294,15 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
 
   //### modify
   class MapReduceInfo {
-    long serialNumber;
-    Map<Integer, Integer> mapping;
+    public long serialNumber = 0;
+    public Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();;
   }
   class MapReduceLocation {
-    long serialNumber;
-    boolean isChange;
-    Map<String, MapReduceInfo> outputLocation;
+    public long serialNumber = 0;
+    public boolean isChange = false;
+    public Map<String, MapReduceInfo> outputLocation = new HashMap<String, MapReduceInfo>();
   }
-  private Map<Integer, MapReduceLocation> mapOutputRecord;
+  private Map<Integer, MapReduceLocation> mapRecord;
   private Map<Integer, MapReduceLocation> reduceRecord;
   private Map<SenderReceiverPair, Integer> shuffleRecord;
   private OpenFlowCommunicateClient openflowClient;
@@ -4547,7 +4547,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
           case SHUFFLE:
             recordShuffleInMRTable(taskTrackerIPAddress,report);
             break;
-          case REDUCE:
+          case CLEANUP:
             cleanMapReduceFromMRTable(taskTrackerIPAddress, report);
             break;
           default:
@@ -4641,7 +4641,6 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
       }
     }
   }
-
   //### modify
   void recordMapInMRTable(int taskTrackerIPAddress, TaskStatus report) {
     //TODO
