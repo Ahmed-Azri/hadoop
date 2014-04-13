@@ -720,13 +720,16 @@ class MapTask extends Task {
 
         //add the size into openflowMapReduceInformation
         openflowLock.lock();
-        if(!openflowMapReduceInformation.containsKey(partitionerNumber) ||
+        try {
+          if(!openflowMapReduceInformation.containsKey(partitionerNumber) ||
             openflowMapReduceInformation.get(partitionerNumber) == null)
           openflowMapReduceInformation.put(partitionerNumber, 0);
 
-        int mapOutputSize = openflowMapReduceInformation.get(partitionerNumber);
-        openflowMapReduceInformation.put(partitionerNumber, mapOutputSize + currentMappingOutputSize);
-        openflowLock.unlock();
+          int mapOutputSize = openflowMapReduceInformation.get(partitionerNumber);
+          openflowMapReduceInformation.put(partitionerNumber, mapOutputSize + currentMappingOutputSize);
+        } finally {
+          openflowLock.unlock();
+        }
 /*      LOG.info("### currentMappingOutputSize is " + Integer.toString(currentMappingOutputSize) +
                 ", currentKeySize is " + Integer.toString(currentMappingKeyOutputSize) +
                 ", currentValueSize is " + Integer.toString(currentMappingValueOutputSize) +

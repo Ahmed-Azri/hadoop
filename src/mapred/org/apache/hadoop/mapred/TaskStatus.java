@@ -65,7 +65,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
 
   //### modify
   private int mapReduceInfoNum = 0;
-  private int serialNumber = 0;
+  private long serialNumber = 0;
   private Map<Integer, Integer> mapReduceInfo;
   //
 
@@ -111,10 +111,10 @@ public abstract class TaskStatus implements Writable, Cloneable {
   public void setStateString(String stateString) { this.stateString = stateString; }
  
   //### modify
-  public void setSerialNumber(int serialNumber) {
+  public void setSerialNumber(long serialNumber) {
     this.serialNumber = serialNumber;
   }
-  public int getSerialNumber() {
+  public long getSerialNumber() {
     return serialNumber;
   }
   public boolean isOpenFlowEnabled() {
@@ -365,7 +365,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
   synchronized void statusUpdate(float progress,
                                  String state,
                                  Counters counters,
-                                 int serialNumber,
+                                 long serialNumber,
                                  Map<Integer, Integer> newMapReduceInfo) {
     setProgress(progress);
     setStateString(state);
@@ -487,7 +487,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
     //### modify
     out.writeInt(mapReduceInfoNum);
     if(isOpenFlowEnabled()) {
-      out.writeInt(serialNumber);
+      out.writeLong(serialNumber);
       for(Integer partitioner : mapReduceInfo.keySet()) {
         out.writeInt(partitioner.intValue());
         out.writeInt(mapReduceInfo.get(partitioner).intValue());
@@ -517,7 +517,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
     //### modify
     this.mapReduceInfoNum = in.readInt();
     if(isOpenFlowEnabled()) {
-      this.serialNumber = in.readInt();
+      this.serialNumber = in.readLong();
       this.mapReduceInfo = new HashMap<Integer, Integer>();
       for(int i=0; i < this.mapReduceInfoNum; ++i) {
         Integer partitioner = in.readInt();

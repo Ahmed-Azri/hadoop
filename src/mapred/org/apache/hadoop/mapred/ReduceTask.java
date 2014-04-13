@@ -31,6 +31,8 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -94,6 +96,10 @@ import org.apache.hadoop.metrics2.lib.DefaultMetricsSystem;
 import org.apache.hadoop.metrics2.lib.MetricMutableCounterInt;
 import org.apache.hadoop.metrics2.lib.MetricMutableCounterLong;
 import org.apache.hadoop.metrics2.lib.MetricsRegistry;
+
+//### modified
+import org.apache.hadoop.mapred.openflow.InternetUtil;
+//
 
 /** A Reduce task. */
 class ReduceTask extends Task {
@@ -380,6 +386,14 @@ class ReduceTask extends Task {
       runTaskCleanupTask(umbilical, reporter);
       return;
     }
+
+    //### modified
+    openflowEnabled = job.getOpenFlowEnabled();
+    if(openflowEnabled)
+      openflowMapReduceInformation = new HashMap<Integer, Integer>();
+    else
+      openflowMapReduceInformation = null;
+    //
     
     // Initialize the codec
     codec = initCodec();
@@ -1712,6 +1726,18 @@ class ReduceTask extends Task {
           new MapOutput(mapOutputLoc.getTaskId(), 
                         mapOutputLoc.getTaskAttemptId(), shuffleData, compressedLength);
         
+        //### modified
+        int remoteHostIPAddress = 0;
+        if(openflowEnabled) {
+          try {
+            String remoteHostname = mapOutputLoc.taskOutput.getHost();
+            InetAddress remoteHostAddress = InetAddress.getByName(remoteHostname);
+            remoteHostIPAddress = InternetUtil.toIPv4Address(remoteHostAddress.getHostAddress());
+          } catch(UnknownHostException e) {
+          }
+        }
+        //
+
         int bytesRead = 0;
         try {
           int n = input.read(shuffleData, 0, shuffleData.length);
@@ -1720,6 +1746,18 @@ class ReduceTask extends Task {
             shuffleClientMetrics.inputBytes(n);
 
             // indicate we're making progress
+            //### modified
+            if(openflowEnabled) {
+              openflowLock.lock();
+              try {
+                int receivedBytes = openflowMapReduceInformation.get(remoteHostIPAddress).intValue();
+                receivedBytes += n;
+                openflowMapReduceInformation.put(remoteHostIPAddress, receivedBytes);
+              } finally {
+                openflowLock.unlock();
+              }
+            }
+            //
             reporter.progress();
             n = input.read(shuffleData, bytesRead, 
                            (shuffleData.length-bytesRead));

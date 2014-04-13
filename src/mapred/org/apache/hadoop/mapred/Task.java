@@ -170,7 +170,7 @@ abstract public class Task implements Writable, Configurable {
 
   //### modify
   protected boolean openflowEnabled;
-  protected int serialNumber = 0;
+  protected long serialNumber = 0;
   protected Map<Integer, Integer> openflowMapReduceInformation;
   protected Lock openflowLock = new ReentrantLock();
   //
@@ -691,14 +691,17 @@ abstract public class Task implements Writable, Configurable {
             }
             else {
               openflowLock.lock();
-              taskStatus.statusUpdate(taskProgress.get(),
-                                      taskProgress.toString(),
-                                      counters,
-                                      serialNumber,
-                                      openflowMapReduceInformation);
+              try {
+                taskStatus.statusUpdate(taskProgress.get(),
+                                        taskProgress.toString(),
+                                        counters,
+                                        serialNumber,
+                                        openflowMapReduceInformation);
                 openflowMapReduceInformation = new HashMap<Integer, Integer>();
                 serialNumber++;
+              } finally {
                 openflowLock.unlock();
+              }
             }
             // 
             taskFound = umbilical.statusUpdate(taskId, taskStatus, jvmContext);
