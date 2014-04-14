@@ -1,5 +1,7 @@
 package org.apache.hadoop.mapred.openflow;
 
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.io.DataOutput;
@@ -61,7 +63,7 @@ public class OpenFlowCommunicateClient extends Thread {
         serverAddress = new InetSocketAddress(controllerIP, controllerPort);
         isConnected = new AtomicBoolean(false);
 
-        mapRecord = new Map<Integer, MapReduceLocation>();
+        mapRecord = new HashMap<Integer, MapReduceLocation>();
         mrJobInfoList = new MRJobInfoList();
     }
 
@@ -200,7 +202,7 @@ public class OpenFlowCommunicateClient extends Thread {
                 Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
                 for(Integer mapper : mapRecord.keySet()) {
                     MapReduceLocation mapReduceLocation = mapRecord.get(mapper);
-                    if(!mapReduceLocation.containsKey(jobId))
+                    if(!mapReduceLocation.outputLocation.containsKey(jobId))
                         continue;
                     MapReduceInfo mapReduceInfo = mapReduceLocation.outputLocation.get(jobId);
                     if(!mapReduceInfo.mapping.containsKey(reducerId))
@@ -214,7 +216,7 @@ public class OpenFlowCommunicateClient extends Thread {
                     shuffleRecord.put(connection, currentBytes + newBytes);
 
                     if(!mrJobInfoList.isChange)
-                        mrJobInfoList.serialNumber += 1;
+                        mrJobInfoList.serialNum += 1;
                     mrJobInfoList.isChange = true;
                 }
             }
@@ -258,7 +260,7 @@ public class OpenFlowCommunicateClient extends Thread {
                 else
                     shuffleRecord.put(connection, transmissionBytes);
                 if(!mrJobInfoList.isChange)
-                    mrJobInfoList.serialNumber += 1;
+                    mrJobInfoList.serialNum += 1;
                 mrJobInfoList.isChange = true;
             }
         }
@@ -267,9 +269,10 @@ public class OpenFlowCommunicateClient extends Thread {
         //modify mapRecord
         synchronized(mapRecord) {
             String jobId = getJobID(report);
-            for(Integer mapper : maRecord.keySet()) {
-                if(mapRecord.outputLocation.containsKey(jobId))
-                    mapRecord.outputLocation.remove(jobId);
+            for(Integer mapper : mapRecord.keySet()) {
+				MapReduceLocation mapLocation = mapRecord.get(mapper);
+                if(mapLocation.outputLocation.containsKey(jobId))
+                    mapLocation.outputLocation.remove(jobId);
             }
         }
     }
