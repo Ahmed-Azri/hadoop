@@ -8,11 +8,13 @@ import java.io.DataOutput;
 
 public class MRJobInfoList {
     public long serialNum;
+    public boolean isChange;
     public int mrJobInfoNum;
     public Map<SenderReceiverPair, Integer> mrJobInfo;
 
     public MRJobInfoList() {
         serialNum = 0;
+        isChange = false;
         mrJobInfoNum = 0;
         mrJobInfo = new HashMap<SenderReceiverPair, Integer>();
     }

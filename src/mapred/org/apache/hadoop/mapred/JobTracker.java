@@ -293,18 +293,6 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
   private Thread hdfsMonitor;
 
   //### modify
-  class MapReduceInfo {
-    public long serialNumber = 0;
-    public Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();;
-  }
-  class MapReduceLocation {
-    public long serialNumber = 0;
-    public boolean isChange = false;
-    public Map<String, MapReduceInfo> outputLocation = new HashMap<String, MapReduceInfo>();
-  }
-  private Map<Integer, MapReduceLocation> mapRecord;
-  private Map<Integer, MapReduceLocation> reduceRecord;
-  private Map<SenderReceiverPair, Integer> shuffleRecord;
   private OpenFlowCommunicateClient openflowClient;
   //
 
@@ -3200,7 +3188,16 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
           tasks = taskScheduler.assignTasks(taskTrackers.get(trackerName));
         }
         if (tasks != null) {
+          int taskTrackerIPAddress = status.getHostIPAddress();
           for (Task task : tasks) {
+            //### modified
+              if(openflowClient != null) {
+                if(task.isMapTask())
+                  openflowClient.addMapperInfo(taskTrackerIPAddress, task.getJobID());
+                else
+                  openflowClient.addReducerInfo(taskTrackerIPAddress, task.getJobID(), task.getPartition());
+              }
+            //
             expireLaunchingTasks.addNewTask(task.getTaskID());
             if(LOG.isDebugEnabled()) {
               LOG.debug(trackerName + " -> LaunchTask: " + task.getTaskID());
@@ -4542,13 +4539,13 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
       if(openflowClient != null) {
         switch(report.getPhase()) {
           case MAP:
-            recordMapInMRTable(taskTrackerIPAddress, report);
+            openflowClient.recordMapInMRTable(taskTrackerIPAddress, report);
             break;
           case SHUFFLE:
-            recordShuffleInMRTable(taskTrackerIPAddress,report);
+            openflowClient.recordShuffleInMRTable(taskTrackerIPAddress,report);
             break;
           case CLEANUP:
-            cleanMapReduceFromMRTable(taskTrackerIPAddress, report);
+            openflowClient.cleanMapReduceFromMRTable(report);
             break;
           default:
             break;
@@ -4640,16 +4637,6 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
         }
       }
     }
-  }
-  //### modify
-  void recordMapInMRTable(int taskTrackerIPAddress, TaskStatus report) {
-    //TODO
-  }
-  void recordShuffleInMRTable(int taskTrackerIPAddress, TaskStatus report) {
-    //TODO
-  }
-  void cleanMapReduceFromMRTable(int taskTrackerIPAddress, TaskStatus report) {
-    //TODO
   }
 
   /**
