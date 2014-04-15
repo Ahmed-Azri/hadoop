@@ -314,6 +314,11 @@ public class OpenFlowCommunicateClient extends Thread {
 				LOG.info(sb.toString());
 				//
                 SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
+				if(!shuffleRecord.containsKey(connection) || shuffleRecord.get(connection) == null) {
+					LOG.info("### " + InternetUtil.fromIPv4Address(mapper) + " to " + InternetUtil.fromIPv4Address(taskTrackerIPAddress)
+							 + " is not record");
+					continue;
+				}
                 int transmissionBytes = shuffleRecord.get(connection).intValue();
                 transmissionBytes -= newMapInfoList.get(mapper).intValue();
                 if(transmissionBytes <= 0)

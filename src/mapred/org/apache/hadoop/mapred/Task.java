@@ -697,7 +697,7 @@ abstract public class Task implements Writable, Configurable {
                                         counters,
                                         serialNumber,
                                         openflowMapReduceInformation);
-				LOG.info("### in map: phase: " + taskStatus.getPhase() + ", state: " + taskStatus.getRunState() + ", mr num : " + taskStatus.getMapReduceInfoNum());
+//				LOG.info("### in map: phase: " + taskStatus.getPhase() + ", state: " + taskStatus.getRunState() + ", mr num : " + taskStatus.getMapReduceInfoNum());
                 openflowMapReduceInformation = new HashMap<Integer, Integer>();
                 serialNumber++;
               } finally {
@@ -962,9 +962,28 @@ abstract public class Task implements Writable, Configurable {
   throws IOException {
     taskStatus.setOutputSize(calculateOutputSize());
     // send a final status report
-    taskStatus.statusUpdate(taskProgress.get(),
-                            taskProgress.toString(), 
-                            counters);
+	//### modify
+	if(!openflowEnabled) {
+      taskStatus.statusUpdate(taskProgress.get(),
+                              taskProgress.toString(), 
+                              counters);
+	}
+	else {
+	  openflowLock.lock();
+      try {
+	    taskStatus.statusUpdate(taskProgress.get(),
+                                taskProgress.toString(),
+                                counters,
+                                serialNumber,
+                                openflowMapReduceInformation);
+//  	    LOG.info("### in map: phase: " + taskStatus.getPhase() + ", state: " + taskStatus.getRunState() + ", mr num : " + taskStatus.getMapReduceInfoNum());
+        openflowMapReduceInformation = new HashMap<Integer, Integer>();
+        serialNumber++;
+      } finally {
+	    openflowLock.unlock();
+      }
+	}
+	//
     statusUpdate(umbilical);
   }
 
