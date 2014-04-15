@@ -217,6 +217,8 @@ public class OpenFlowCommunicateClient extends Thread {
             MapReduceLocation mapLocation = mapRecord.get(taskTrackerIPAddress);
             if(!mapLocation.outputLocation.containsKey(jobId) || mapLocation.outputLocation.get(jobId) == null)
                 mapLocation.outputLocation.put(jobId, new MapReduceInfo());
+			LOG.info("in addMapperInfo, taskTracker: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
+					", jobId: " + jobId);
         }
     }
     public void addReducerInfo(int taskTrackerIPAddress, String jobId, int reducerId) {
@@ -243,6 +245,8 @@ public class OpenFlowCommunicateClient extends Thread {
                         mrJobInfoList.serialNum += 1;
                     mrJobInfoList.isChange = true;
                 }
+				LOG.info("in addReducerInfo, taskTracker: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
+						", jobId: " + jobId + ", reducerId: " + reducerId);
             }
         }
     }
@@ -264,6 +268,7 @@ public class OpenFlowCommunicateClient extends Thread {
                                                     + newMapInfoList.get(reducerId).intValue());
                 mapInfo.mapping.put(reducerId, newReceivedBytes);
             }
+			showMapRecordMessage();
         }
     }
     public void recordShuffleInMRTable(int taskTrackerIPAddress, TaskStatus report) {
@@ -287,6 +292,7 @@ public class OpenFlowCommunicateClient extends Thread {
                     mrJobInfoList.serialNum += 1;
                 mrJobInfoList.isChange = true;
             }
+			showMRJobInfoListMessage();
         }
     }
     public void cleanMapReduceFromMRTable(TaskStatus report) {
@@ -298,10 +304,40 @@ public class OpenFlowCommunicateClient extends Thread {
                 if(mapLocation.outputLocation.containsKey(jobId))
                     mapLocation.outputLocation.remove(jobId);
             }
+			LOG.info("in cleanMapReduceFromMRTable, clean job " + jobId);
         }
     }
     private String getJobID(TaskStatus task) {
         TaskAttemptID taskId = task.getTaskID();
         return taskId.getJobID().toString();
     }
+	private void showMapRecordMessage() {
+		StringBuffer mapRecordSB = new StringBuffer();
+		mapRecordSB.append("\n\tmapRecord:\n");
+		for(Integer mapper : mapRecord.keySet()) {
+			MapReduceLocation mapLocation = mapRecord.get(mapper);
+			mapRecordSB.append("\tmapper: " + InternetUtil.fromIPv4Address(mapper) + "\n");
+			for(String jobId : mapLocation.outputLocation.keySet()) {
+				mapRecordSB.append("\t\tJobID: " + jobId + "\n");
+				MapReduceInfo mapInfo = mapLocation.outputLocation.get(jobId);
+				for(Integer reducerId : mapInfo.mapping.keySet()) {
+					mapRecordSB.append("\t\t\tReducerID: " + reducerId + 
+									   ", size: " + mapInfo.mapping.get(reducerId) + "\n");
+				}
+			}
+
+		}
+		LOG.info(mapRecordSB.toString());
+	}
+	private void showMRJobInfoListMessage() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("\n\tMRJobInfoList, serialNum: " + mrJobInfoList.serialNum + 
+				"isChange: " + mrJobInfoList.isChange + "\n");
+		for(SenderReceiverPair connection : mrJobInfoList.mrJobInfo.keySet()) {
+			sb.append("\t\tSender: " + InternetUtil.fromIPv4Address(connection.getFirstHost()) + 
+					  ", Receiver:" + InternetUtil.fromIPv4Address(connection.getSecondHost()) + 
+					  ", size: " + mrJobInfoList.mrJobInfo.get(connection) + "\n");
+		}
+		LOG.info(sb.toString());
+	}
 }
