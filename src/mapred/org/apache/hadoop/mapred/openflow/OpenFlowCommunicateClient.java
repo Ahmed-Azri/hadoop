@@ -2,6 +2,9 @@ package org.apache.hadoop.mapred.openflow;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.io.DataOutput;
@@ -65,6 +68,9 @@ public class OpenFlowCommunicateClient extends Thread {
 
         mapRecord = new HashMap<Integer, MapReduceLocation>();
         mrJobInfoList = new MRJobInfoList();
+
+		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+		scheduler.scheduleAtFixedRate(new SendTask(), 1000, 500, TimeUnit.MILLISECONDS);
     }
 
     ///////////////////////
@@ -179,12 +185,27 @@ public class OpenFlowCommunicateClient extends Thread {
 
         topologyInfo =  newTopologyInfo;
     }
+
+	// ***********
+	// Send Thread
+	// ***********
+	class SendTask implements Runnable {
+		@Override
+		public void run() {
+			if(isConnected.get())
+				sendMRJobInfoToController();
+		}
+	}
     private void sendMRJobInfoToController() throws IOException {
         synchronized(mrJobInfoList) {
             out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());
             mrJobInfoList.write(out);
         }
     }
+
+	// **************************
+	// Methods provided to hadoop
+	// **************************
     public void addMapperInfo(int taskTrackerIPAddress, String jobId) {
         //modify mapRecord
         synchronized(mapRecord) {
