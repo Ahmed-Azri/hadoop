@@ -697,6 +697,7 @@ abstract public class Task implements Writable, Configurable {
                                         counters,
                                         serialNumber,
                                         openflowMapReduceInformation);
+				LOG.info("### in map: phase: " + taskStatus.getPhase() + ", state: " + taskStatus.getStateString() + ", mr num : " + taskStatus.getMapReduceInfoNum());
                 openflowMapReduceInformation = new HashMap<Integer, Integer>();
                 serialNumber++;
               } finally {
