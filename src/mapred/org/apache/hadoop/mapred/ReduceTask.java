@@ -366,6 +366,13 @@ class ReduceTask extends Task {
       sortPhase  = getProgress().addPhase("sort");
       reducePhase = getProgress().addPhase("reduce");
     }
+    //### modified
+    openflowEnabled = job.getOpenFlowEnabled();
+    if(openflowEnabled)
+      openflowMapReduceInformation = new HashMap<Integer, Integer>();
+    else
+      openflowMapReduceInformation = null;
+    //
     // start thread that will handle communication with parent
     TaskReporter reporter = new TaskReporter(getProgress(), umbilical,
         jvmContext);
@@ -387,13 +394,6 @@ class ReduceTask extends Task {
       return;
     }
 
-    //### modified
-    openflowEnabled = job.getOpenFlowEnabled();
-    if(openflowEnabled)
-      openflowMapReduceInformation = new HashMap<Integer, Integer>();
-    else
-      openflowMapReduceInformation = null;
-    //
     
     // Initialize the codec
     codec = initCodec();
@@ -1750,6 +1750,9 @@ class ReduceTask extends Task {
             if(openflowEnabled) {
               openflowLock.lock();
               try {
+				if(!openflowMapReduceInformation.containsKey(remoteHostIPAddress) ||
+				   openflowMapReduceInformation.get(remoteHostIPAddress) == null)
+					openflowMapReduceInformation.put(remoteHostIPAddress, new Integer(0));
                 int receivedBytes = openflowMapReduceInformation.get(remoteHostIPAddress).intValue();
                 receivedBytes += n;
                 openflowMapReduceInformation.put(remoteHostIPAddress, receivedBytes);
