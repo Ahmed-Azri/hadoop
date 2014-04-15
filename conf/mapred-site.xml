@@ -61,7 +61,7 @@
 </property>
 <property>
     <name>mapred.openflow.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>The flag to indicate if openflow version is enabled</description>
 </property>
 <property>
