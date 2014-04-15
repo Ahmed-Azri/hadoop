@@ -1344,14 +1344,9 @@ class ReduceTask extends Task {
             CopyOutputErrorType error = CopyOutputErrorType.OTHER_ERROR;
             readError = false;
             try {
-			  SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-			  LOG.info("### Start " + loc.taskOutput.getHost() + " " + sdf.format(new Date()));
               shuffleClientMetrics.threadBusy();
               start(loc);
               size = copyOutput(loc);
-			  totalSize += size;
-			  LOG.info("### End " + loc.taskOutput.getHost() + " " + sdf.format(new Date())
-					+ " " + size + " " + totalSize);
               shuffleClientMetrics.successFetch();
               error = CopyOutputErrorType.NO_ERROR;
             } catch (IOException e) {
@@ -1728,9 +1723,9 @@ class ReduceTask extends Task {
         
         //### modified
         int remoteHostIPAddress = 0;
+        String remoteHostname = mapOutputLoc.taskOutput.getHost();
         if(openflowEnabled) {
           try {
-            String remoteHostname = mapOutputLoc.taskOutput.getHost();
             InetAddress remoteHostAddress = InetAddress.getByName(remoteHostname);
             remoteHostIPAddress = InternetUtil.toIPv4Address(remoteHostAddress.getHostAddress());
           } catch(UnknownHostException e) {
@@ -1738,6 +1733,8 @@ class ReduceTask extends Task {
         }
         //
 
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		LOG.info("### Start " + remoteHostname + " " + sdf.format(new Date()));
         int bytesRead = 0;
         try {
           int n = input.read(shuffleData, 0, shuffleData.length);
@@ -1772,6 +1769,10 @@ class ReduceTask extends Task {
           }
 
           input.close();
+
+		  totalSize += bytesRead;
+		  LOG.info("### End " + remoteHostname + " " + sdf.format(new Date())
+			       + " " + bytesRead + " " + totalSize);
         } catch (IOException ioe) {
           LOG.info("Failed to shuffle from " + mapOutputLoc.getTaskAttemptId(), 
                    ioe);
