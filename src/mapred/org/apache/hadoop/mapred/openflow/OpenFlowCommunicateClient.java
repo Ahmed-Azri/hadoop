@@ -228,17 +228,15 @@ public class OpenFlowCommunicateClient extends Thread {
                 Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
                 for(Integer mapper : mapRecord.keySet()) {
                     MapReduceLocation mapReduceLocation = mapRecord.get(mapper);
-					LOG.info("### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-							"mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId);
                     if(!mapReduceLocation.outputLocation.containsKey(jobId)) {
-					LOG.info("### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
+					LOG.info("\n\t### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
 							"mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
 							", NO SUCH JOB in map table");
                         continue;
 					}
                     MapReduceInfo mapReduceInfo = mapReduceLocation.outputLocation.get(jobId);
                     if(!mapReduceInfo.mapping.containsKey(reducerId)) {
-					LOG.info("### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
+					LOG.info("\n\t### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
 							"mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
 							", NO SUCH REDUCER_ID in map table");
                         continue;
@@ -250,7 +248,7 @@ public class OpenFlowCommunicateClient extends Thread {
                     int currentBytes = shuffleRecord.get(connection);
                     int newBytes = mapReduceInfo.mapping.get(reducerId);
                     shuffleRecord.put(connection, currentBytes + newBytes);
-					LOG.info("### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
+					LOG.info("\n\t### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
 							"mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
 							", ADD CONNECTION IN shuffleRecord");
 
@@ -258,7 +256,7 @@ public class OpenFlowCommunicateClient extends Thread {
                         mrJobInfoList.serialNum += 1;
                     mrJobInfoList.isChange = true;
                 }
-				LOG.info("in addReducerInfo, taskTracker: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
+				LOG.info("### in addReducerInfo, taskTracker: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
 						", jobId: " + jobId + ", reducerId: " + reducerId);
             }
         }
