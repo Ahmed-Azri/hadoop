@@ -46,6 +46,9 @@ public class TaskTrackerStatus implements Writable {
 
   String trackerName;
   String host;
+  //### modified
+  int hostIPAddress;
+  //
   int httpPort;
   int taskFailures;
   int dirFailures;
@@ -384,6 +387,15 @@ public class TaskTrackerStatus implements Writable {
     return host;
   }
 
+  //### modified
+  public int getHostIPAddress() {
+    return hostIPAddress;
+  }
+  public void setHostIPAddress(int ip) {
+    hostIPAddress = ip;
+  }
+  //
+
   /**
    * Get the port that this task tracker is serving http requests on.
    * @return the http port
@@ -661,6 +673,7 @@ public class TaskTrackerStatus implements Writable {
   public void write(DataOutput out) throws IOException {
     Text.writeString(out, trackerName);
     Text.writeString(out, host);
+    out.writeInt(hostIPAddress);
     out.writeInt(httpPort);
     out.writeInt(taskFailures);
     out.writeInt(dirFailures);
@@ -678,6 +691,7 @@ public class TaskTrackerStatus implements Writable {
   public void readFields(DataInput in) throws IOException {
     this.trackerName = Text.readString(in);
     this.host = Text.readString(in);
+    this.hostIPAddress = in.readInt();
     this.httpPort = in.readInt();
     this.taskFailures = in.readInt();
     this.dirFailures = in.readInt();

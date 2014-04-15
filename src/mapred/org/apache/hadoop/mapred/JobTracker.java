@@ -25,6 +25,7 @@ import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.net.BindException;
 import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.PrivilegedExceptionAction;
 import java.text.ParseException;
@@ -114,9 +115,11 @@ import org.mortbay.util.ajax.JSON;
 
 //### modify
 import org.apache.hadoop.mapred.openflow.OpenFlowCommunicateClient;
-import org.apache.hadoop.mapred.openflow.MRJobInfo;
+import org.apache.hadoop.mapred.openflow.MRJobInfoList;
 import org.apache.hadoop.mapred.openflow.TopologyInfo;
 import org.apache.hadoop.mapred.openflow.HostPair;
+import org.apache.hadoop.mapred.openflow.SenderReceiverPair;
+import org.apache.hadoop.mapred.openflow.InternetUtil;
 //
 
 /*******************************************************
@@ -3095,13 +3098,14 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
                                                   boolean acceptNewTasks, 
                                                   short responseId) 
     throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Got heartbeat from: " + status.getTrackerName() + 
-                " (restarted: " + restarted + 
-                " initialContact: " + initialContact + 
-                " acceptNewTasks: " + acceptNewTasks + ")" +
-                " with responseId: " + responseId);
-    }
+//    if (LOG.isDebugEnabled()) {
+      LOG.info("\n\tGot heartbeat from: " + status.getTrackerName() + 
+                "\n\t host address: " + InternetUtil.fromIPv4Address(status.getHostIPAddress()) + 
+                "\n\t (restarted: " + restarted + 
+                "\n\t initialContact: " + initialContact + 
+                "\n\t acceptNewTasks: " + acceptNewTasks + ")" +
+                "\n\t with responseId: " + responseId);
+//    }
 
     // Make sure heartbeat is from a tasktracker allowed by the jobtracker.
     if (!acceptTaskTracker(status)) {
@@ -3184,7 +3188,16 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
           tasks = taskScheduler.assignTasks(taskTrackers.get(trackerName));
         }
         if (tasks != null) {
+          int taskTrackerIPAddress = status.getHostIPAddress();
           for (Task task : tasks) {
+            //### modified
+              if(openflowClient != null) {
+                if(task.isMapTask())
+                  openflowClient.addMapperInfo(taskTrackerIPAddress, task.getJobID().toString());
+                else
+                  openflowClient.addReducerInfo(taskTrackerIPAddress, task.getJobID().toString(), task.getPartition());
+              }
+            //
             expireLaunchingTasks.addNewTask(task.getTaskID());
             if(LOG.isDebugEnabled()) {
               LOG.debug(trackerName + " -> LaunchTask: " + task.getTaskID());
@@ -4520,28 +4533,25 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
    */
   void updateTaskStatuses(TaskTrackerStatus status) {
     String trackerName = status.getTrackerName();
+    int taskTrackerIPAddress = status.getHostIPAddress();
     for (TaskStatus report : status.getTaskReports()) {
     //###
-/*    if(report.getPhase() == TaskStatus.Phase.MAP) {
-        if(!report.isOpenFlowEnabled())
-          LOG.info("### phase is map, not openflow enabled");
-        else if(serialNumber != report.getSerialNumber())
-        {
-          serialNumber = report.getSerialNumber();
-          Map<Integer, Integer> ofmap = report.getMapReduceInfo();
-          StringBuffer stringBuf = new StringBuffer();
-          String ofmapString = "partitioner: 0, size: " + ofmap.get(0).intValue();
-          receivedByte += ofmap.get(0).intValue();
-          LOG.info("### in updateTaskStatuses" +
-              ", taskTracker: " + report.getTaskTracker() +
-              ", id: " + report.getTaskID() +
-              ", serialNumber: " + serialNumber +
-              ", receivedByte is " + Integer.toString(receivedByte) +
-              ", openflowMapReduceInfo: " + ofmapString);
+      if(openflowClient != null) {
+        switch(report.getPhase()) {
+          case MAP:
+            openflowClient.recordMapInMRTable(taskTrackerIPAddress, report);
+            break;
+          case SHUFFLE:
+            openflowClient.recordShuffleInMRTable(taskTrackerIPAddress,report);
+            break;
+          case CLEANUP:
+            openflowClient.cleanMapReduceFromMRTable(report);
+            break;
+          default:
+            break;
         }
       }
-      else
-        LOG.info("### phase is " + report.getPhase());*/
+    //
 
       report.setTaskTracker(trackerName);
       TaskAttemptID taskId = report.getTaskID();

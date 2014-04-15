@@ -10,6 +10,11 @@ Automatically created by Apache Jakarta Tomcat JspC.
 
 
     <servlet>
+        <servlet-name>org.apache.hadoop.hdfs.server.datanode.browseBlock_jsp</servlet-name>
+        <servlet-class>org.apache.hadoop.hdfs.server.datanode.browseBlock_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
         <servlet-name>org.apache.hadoop.hdfs.server.datanode.tail_jsp</servlet-name>
         <servlet-class>org.apache.hadoop.hdfs.server.datanode.tail_jsp</servlet-class>
     </servlet>
@@ -19,10 +24,10 @@ Automatically created by Apache Jakarta Tomcat JspC.
         <servlet-class>org.apache.hadoop.hdfs.server.datanode.browseDirectory_jsp</servlet-class>
     </servlet>
 
-    <servlet>
+    <servlet-mapping>
         <servlet-name>org.apache.hadoop.hdfs.server.datanode.browseBlock_jsp</servlet-name>
-        <servlet-class>org.apache.hadoop.hdfs.server.datanode.browseBlock_jsp</servlet-class>
-    </servlet>
+        <url-pattern>/browseBlock.jsp</url-pattern>
+    </servlet-mapping>
 
     <servlet-mapping>
         <servlet-name>org.apache.hadoop.hdfs.server.datanode.tail_jsp</servlet-name>
@@ -32,11 +37,6 @@ Automatically created by Apache Jakarta Tomcat JspC.
     <servlet-mapping>
         <servlet-name>org.apache.hadoop.hdfs.server.datanode.browseDirectory_jsp</servlet-name>
         <url-pattern>/browseDirectory.jsp</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>org.apache.hadoop.hdfs.server.datanode.browseBlock_jsp</servlet-name>
-        <url-pattern>/browseBlock.jsp</url-pattern>
     </servlet-mapping>
 
 </web-app>
