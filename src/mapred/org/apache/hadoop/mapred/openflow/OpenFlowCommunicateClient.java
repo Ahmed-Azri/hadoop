@@ -249,9 +249,18 @@ public class OpenFlowCommunicateClient extends Thread {
                     int newBytes = mapReduceInfo.mapping.get(reducerId);
                     shuffleRecord.put(connection, currentBytes + newBytes);
 					LOG.info("\n\t### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-							"mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
+							", mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
 							", ADD CONNECTION IN shuffleRecord");
-
+					//
+					StringBuffer sb = new StringBuffer();
+					sb.append("\n\tdump shuffleRecord\n");
+					for(SenderReceiverPair conn : shuffleRecord.keySet()) {
+						sb.append("\t\tSRC:" + InternetUtil.fromIPv4Address(conn.getFirstHost()) +
+								" DST:" + InternetUtil.fromIPv4Address(conn.getSecondHost()) + 
+								" size: " + shuffleRecord.get(conn) + "\n");
+					}
+					LOG.info(sb.toString());
+					//
                     if(!mrJobInfoList.isChange)
                         mrJobInfoList.serialNum += 1;
                     mrJobInfoList.isChange = true;
@@ -292,8 +301,18 @@ public class OpenFlowCommunicateClient extends Thread {
 
             Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
             for(Integer mapper : newMapInfoList.keySet()) {
-				LOG.info("### debug, mapper is " + InternetUtil.fromIPv4Address(mapper) + ", taskTracker is " + 
+				//
+				LOG.info("### in recordShuffle debug, mapper is " + InternetUtil.fromIPv4Address(mapper) + ", taskTracker is " + 
 						InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", jobId: " + jobId);
+				StringBuffer sb = new StringBuffer();
+				sb.append("\n\tdump shuffleRecord\n");
+				for(SenderReceiverPair conn : shuffleRecord.keySet()) {
+					sb.append("\t\tSRC:" + InternetUtil.fromIPv4Address(conn.getFirstHost()) +
+							" DST:" + InternetUtil.fromIPv4Address(conn.getSecondHost()) + 
+							" size: " + shuffleRecord.get(conn) + "\n");
+				}
+				LOG.info(sb.toString());
+				//
                 SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
                 int transmissionBytes = shuffleRecord.get(connection).intValue();
                 transmissionBytes -= newMapInfoList.get(mapper).intValue();
