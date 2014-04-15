@@ -180,7 +180,7 @@ public class OpenFlowCommunicateClient extends Thread {
         newTopologyInfo.readFields(in);
 
 		//###
-		LOG.info("### read new topology: " + newTopologyInfo);
+//		LOG.info("### read new topology: " + newTopologyInfo);
 		//
 
         topologyInfo =  newTopologyInfo;
