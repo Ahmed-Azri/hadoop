@@ -192,8 +192,11 @@ public class OpenFlowCommunicateClient extends Thread {
 	class SendTask implements Runnable {
 		@Override
 		public void run() {
-			if(isConnected.get())
-				sendMRJobInfoToController();
+			try {
+				if(isConnected.get())
+					sendMRJobInfoToController();
+			} catch(IOException e) {
+			}
 		}
 	}
     private void sendMRJobInfoToController() throws IOException {
