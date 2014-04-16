@@ -3193,9 +3193,13 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
             //### modified
               if(openflowClient != null) {
                 if(task.isMapTask())
-                  openflowClient.addMapperInfo(taskTrackerIPAddress, task.getJobID().toString());
+                  openflowClient.addMapperInfo(taskTrackerIPAddress,
+											   task.getJobID().toString(),
+											   task.getPartition());
                 else
-                  openflowClient.addReducerInfo(taskTrackerIPAddress, task.getJobID().toString(), task.getPartition());
+                  openflowClient.addReducerInfo(taskTrackerIPAddress,
+												task.getJobID().toString(),
+												task.getPartition());
               }
             //
             expireLaunchingTasks.addNewTask(task.getTaskID());
@@ -4539,23 +4543,16 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
       if(openflowClient != null) {
         switch(report.getPhase()) {
           case MAP:
-			LOG.info("### " + trackerName + ", MAP phase");
             openflowClient.recordMapInMRTable(taskTrackerIPAddress, report);
             break;
           case SHUFFLE:
-			LOG.info("### " + trackerName + ", SHUFFLE phase");
             openflowClient.recordShuffleInMRTable(taskTrackerIPAddress,report);
             break;
           case CLEANUP:
-			LOG.info("### " + trackerName + ", CLEANUP phase");
             openflowClient.cleanMapReduceFromMRTable(report);
             break;
-		  case STARTING:
-			LOG.info("### " + trackerName + ", STARTING phase");
-		  case SORT:
-			LOG.info("### " + trackerName + ", SORT phase");
-          default:
-            break;
+		  default:
+			break;
         }
       }
     //

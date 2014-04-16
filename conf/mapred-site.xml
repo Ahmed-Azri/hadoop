@@ -33,7 +33,7 @@
 </property>
 <property>
 	<name>mapred.tasktracker.reduce.tasks.maximum</name>
-	<value>2</value>
+	<value>1</value>
 	<description>The maximum number of reduce tasks that will be run
 		simultaneously by a task tracker.
 	</description>
@@ -56,8 +56,8 @@
 	<value>16</value>
 </property>
 <property>
-    <name>slave.host.name</name>
-    <value>${local.bind.address}</value>
+	<name>slave.host.name</name>
+		<value>${local.bind.address}</value>
 </property>
 <property>
     <name>mapred.openflow.enabled</name>

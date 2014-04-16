@@ -2,6 +2,9 @@ package org.apache.hadoop.mapred.openflow;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,12 +32,53 @@ public class OpenFlowCommunicateClient extends Thread {
         LogFactory.getLog(OpenFlowCommunicateClient.class.getName());
 
     class MapReduceInfo {
+		long serialNum = -1;
         public Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();
     }
-    class MapReduceLocation {
-        public Map<String, MapReduceInfo> outputLocation = new HashMap<String, MapReduceInfo>();
-    }
-
+	class MapReduceJobTask implements Comparable<MapReduceJobTask> {
+		public String jobId;
+		public int taskId;
+		public MapReduceJobTask(String job, int task) {
+			jobId = job;
+			taskId = task;
+		}
+		@Override
+		public int compareTo(MapReduceJobTask o) {
+			if(jobId == null && o.jobId != null)
+				return -1;
+			if(jobId != null && o.jobId == null)
+				return 1;
+			int cmp;
+			if(jobId == null && o.jobId == null)
+				cmp = 0;
+			else
+				cmp = jobId.compareTo(o.jobId);
+			return cmp != 0? cmp : Integer.valueOf(taskId).compareTo(o.taskId);
+		}
+		@Override
+		public int hashCode() {
+			return jobId != null? (31*jobId.hashCode() + taskId) : taskId;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if(!(obj instanceof MapReduceJobTask))
+				return false;
+			if(this == obj)
+				return true;
+			MapReduceJobTask task = (MapReduceJobTask)obj;
+			if(jobId == null) {
+				if(task.jobId == null)
+					return taskId == task.taskId;
+				else
+					return false;
+			}
+			return jobId.equals(task.jobId) && (taskId == task.taskId);
+		}
+	}
+	class MapReduceJobInfo {
+		public Map<MapReduceJobTask, MapReduceInfo> taskInfo 
+							= new HashMap<MapReduceJobTask, MapReduceInfo>();
+	}
     ////////////
     // Fields //
     ////////////
@@ -48,7 +92,8 @@ public class OpenFlowCommunicateClient extends Thread {
 
     private TopologyInfo topologyInfo;
 
-    private Map<Integer, MapReduceLocation> mapRecord;
+    private Map<Integer, MapReduceJobInfo> mapRecord;
+    private Map<Integer, MapReduceJobInfo> reduceRecord;
     private MRJobInfoList mrJobInfoList;
 
     /////////////////
@@ -66,7 +111,8 @@ public class OpenFlowCommunicateClient extends Thread {
         serverAddress = new InetSocketAddress(controllerIP, controllerPort);
         isConnected = new AtomicBoolean(false);
 
-        mapRecord = new HashMap<Integer, MapReduceLocation>();
+        mapRecord = new HashMap<Integer, MapReduceJobInfo>();
+        reduceRecord = new HashMap<Integer, MapReduceJobInfo>();
         mrJobInfoList = new MRJobInfoList();
 
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -209,162 +255,225 @@ public class OpenFlowCommunicateClient extends Thread {
 	// **************************
 	// Methods provided to hadoop
 	// **************************
-    public void addMapperInfo(int taskTrackerIPAddress, String jobId) {
+    public void addMapperInfo(int taskTrackerIPAddress, String jobId, int mapperId) {
         //modify mapRecord
         synchronized(mapRecord) {
-            if(!mapRecord.containsKey(taskTrackerIPAddress) || mapRecord.get(taskTrackerIPAddress) == null)
-                mapRecord.put(taskTrackerIPAddress, new MapReduceLocation());
-            MapReduceLocation mapLocation = mapRecord.get(taskTrackerIPAddress);
-            if(!mapLocation.outputLocation.containsKey(jobId) || mapLocation.outputLocation.get(jobId) == null)
-                mapLocation.outputLocation.put(jobId, new MapReduceInfo());
-			LOG.info("in addMapperInfo, taskTracker: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
-					", jobId: " + jobId);
+			MapReduceJobInfo mapJobInfo = createAndGetJobInfoInRecord(taskTrackerIPAddress, mapRecord);
+			MapReduceInfo info = createAndGetMRInfoInJob(jobId, mapperId, mapJobInfo.taskInfo);
+
+/*			LOG.info("in addMapperInfo, taskTracker: " 
+					 + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
+					 ", jobId: " + jobId + ", mapperId: " + mapperId);*/
         }
     }
+	
     public void addReducerInfo(int taskTrackerIPAddress, String jobId, int reducerId) {
         //modify shuffleRecord
         synchronized(mrJobInfoList) {
-            synchronized(mapRecord) {
-                Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
-                for(Integer mapper : mapRecord.keySet()) {
-                    MapReduceLocation mapReduceLocation = mapRecord.get(mapper);
-                    if(!mapReduceLocation.outputLocation.containsKey(jobId)) {
-					LOG.info("\n\t### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-							"mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
-							", NO SUCH JOB in map table");
-                        continue;
-					}
-                    MapReduceInfo mapReduceInfo = mapReduceLocation.outputLocation.get(jobId);
-                    if(!mapReduceInfo.mapping.containsKey(reducerId)) {
-					LOG.info("\n\t### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-							"mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
-							", NO SUCH REDUCER_ID in map table");
-                        continue;
-					}
+			synchronized(reduceRecord) {
+				synchronized(mapRecord) {
+					Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
+					for(Integer mapper : mapRecord.keySet()) {
+						//ignore local case
+						if(mapper.equals(taskTrackerIPAddress))
+							continue;
 
-                    SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
-                    if(!shuffleRecord.containsKey(connection) || shuffleRecord.get(connection) == null)
-                        shuffleRecord.put(connection, new Integer(0));
-                    int currentBytes = shuffleRecord.get(connection);
-                    int newBytes = mapReduceInfo.mapping.get(reducerId);
-                    shuffleRecord.put(connection, currentBytes + newBytes);
-					LOG.info("\n\t### debug, taskTrackerIPAddress: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-							", mapper is " + InternetUtil.fromIPv4Address(mapper) + ", jobId: " + jobId + ", reducerId: " + reducerId + 
-							", ADD CONNECTION IN shuffleRecord");
-					//
-					StringBuffer sb = new StringBuffer();
-					sb.append("\n\tdump shuffleRecord\n");
-					for(SenderReceiverPair conn : shuffleRecord.keySet()) {
-						sb.append("\t\tSRC:" + InternetUtil.fromIPv4Address(conn.getFirstHost()) +
-								" DST:" + InternetUtil.fromIPv4Address(conn.getSecondHost()) + 
-								" size: " + shuffleRecord.get(conn) + "\n");
+						MapReduceJobInfo mapJobInfo = mapRecord.get(mapper);
+						for(MapReduceJobTask jobTask : mapJobInfo.taskInfo.keySet()) {
+							if(!jobId.equals(jobTask.jobId))
+								continue;
+							MapReduceInfo mapInfo = mapJobInfo.taskInfo.get(jobTask);
+							if(!mapInfo.mapping.containsKey(reducerId))
+								continue;
+
+							//record in mrJobInfoList.mrJobInfo
+							SenderReceiverPair connection
+								= new SenderReceiverPair(mapper, taskTrackerIPAddress);
+							int currentBytes = createAndGetSizeInConnection(connection,
+																			shuffleRecord).intValue();
+							
+							int newBytes = mapInfo.mapping.get(reducerId);
+							shuffleRecord.put(connection, currentBytes + newBytes);
+
+							//record in reduceRecord
+							MapReduceJobInfo reduceJobInfo 
+								= createAndGetJobInfoInRecord(taskTrackerIPAddress, reduceRecord);
+							MapReduceInfo reduceInfo 
+								= createAndGetMRInfoInJob(jobId, reducerId, reduceJobInfo.taskInfo);
+							int reduceReceiveBytes 
+								= createAndGetSizeInIDPair(mapper, reduceInfo.mapping).intValue();
+							reduceInfo.mapping.put(mapper, reduceReceiveBytes + newBytes);
+						}
 					}
-					LOG.info(sb.toString());
-					//
-                    if(!mrJobInfoList.isChange)
-                        mrJobInfoList.serialNum += 1;
-                    mrJobInfoList.isChange = true;
-                }
-				LOG.info("### in addReducerInfo, taskTracker: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
-						", jobId: " + jobId + ", reducerId: " + reducerId);
-            }
+					showMRJobInfoListMessage();
+	            }
+			}
         }
     }
     public void recordMapInMRTable(int taskTrackerIPAddress, TaskStatus report) {
         //modify mapRecord
         synchronized(mapRecord) {
             String jobId = getJobID(report);
+			int mapperId = getTaskID(report);
             Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
             if(newMapInfoList == null)
                 return;
 
-            MapReduceLocation mapLocation = mapRecord.get(taskTrackerIPAddress);
-            MapReduceInfo mapInfo = mapLocation.outputLocation.get(jobId);
-            for(Integer reducerId : newMapInfoList.keySet()) {
-                if(!mapInfo.mapping.containsKey(reducerId) || mapInfo.mapping.get(reducerId) == null)
-                    mapInfo.mapping.put(reducerId, new Integer(0));
-                Integer receivedBytes = mapInfo.mapping.get(reducerId);
-                Integer newReceivedBytes = new Integer(receivedBytes.intValue() 
-                                                    + newMapInfoList.get(reducerId).intValue());
-                mapInfo.mapping.put(reducerId, newReceivedBytes);
-            }
-			showMapRecordMessage();
+			long serialNum = report.getSerialNumber();
+			MapReduceJobInfo mapJobInfo = mapRecord.get(taskTrackerIPAddress);
+			MapReduceJobTask mapJobTask = new MapReduceJobTask(jobId, mapperId);
+			MapReduceInfo mapInfo = mapJobInfo.taskInfo.get(mapJobTask);
+/*			LOG.info("@@@ in recordMapInMRTable, mapInfo.serialNum: " + mapInfo.serialNum + 
+					 ", serialNum: " + serialNum);*/
+			if(mapInfo.serialNum == serialNum)
+				return;
+			mapInfo.serialNum = serialNum;
+			for(Integer reducerId : newMapInfoList.keySet()) {
+				int receivedBytes = createAndGetSizeInIDPair(reducerId, mapInfo.mapping).intValue();
+				int newReceivedBytes = newMapInfoList.get(reducerId).intValue();
+				mapInfo.mapping.put(reducerId, receivedBytes + newReceivedBytes);
+/*				LOG.info("@@@ in recordMapInMRTable, mapperId: " + mapperId + ", mapper: " + report.getTaskID().toString() + 
+						 " to reducerId: " + reducerId + ", serialNum: " + serialNum + ", size: " + newReceivedBytes);*/
+			}
+			
+			//
+/*			StringBuffer sb = new StringBuffer();
+			sb.append("\n\t### in recordMapInMRTable, dump mapRecord table\n");
+			for(Integer mapper : mapRecord.keySet()) {
+				sb.append("\t\tmapper: " + InternetUtil.fromIPv4Address(mapper) + "\n");
+				MapReduceJobInfo jobInfo = mapRecord.get(mapper);
+				for(MapReduceJobTask jobTask : jobInfo.taskInfo.keySet()) {
+					sb.append("\t\t\tjobId: " + jobTask.jobId + ", mapperId: " + jobTask.taskId + "\n");
+					MapReduceInfo info = jobInfo.taskInfo.get(jobTask);
+					for(Integer reducerId : info.mapping.keySet()) {
+						sb.append("\t\t\t\tReducerId: " + reducerId + ", size: " + info.mapping.get(reducerId) + "\n");
+					}
+				}
+			}
+			LOG.info(sb.toString());*/
+			//
         }
     }
     public void recordShuffleInMRTable(int taskTrackerIPAddress, TaskStatus report) {
-        //modify shuffleRecord
         synchronized(mrJobInfoList) {
-            String jobId = getJobID(report);
-            Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
-            if(newMapInfoList == null)
-                return;
+			synchronized(reduceRecord) {
+	            String jobId = getJobID(report);
+				int reducerId = getTaskID(report);
+		        Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
+		        if(newMapInfoList == null)
+		            return;
 
-            Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
-            for(Integer mapper : newMapInfoList.keySet()) {
+				long serialNum = report.getSerialNumber();
+				MapReduceJobInfo reduceJobInfo = reduceRecord.get(taskTrackerIPAddress);
+				MapReduceJobTask reduceJobTask = new MapReduceJobTask(jobId, reducerId);
+				MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
+
 				//
-				LOG.info("### in recordShuffle debug, mapper is " + InternetUtil.fromIPv4Address(mapper) + ", taskTracker is " + 
-						InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", jobId: " + jobId);
-				StringBuffer sb = new StringBuffer();
-				sb.append("\n\tdump shuffleRecord\n");
-				for(SenderReceiverPair conn : shuffleRecord.keySet()) {
-					sb.append("\t\tSRC:" + InternetUtil.fromIPv4Address(conn.getFirstHost()) +
-							" DST:" + InternetUtil.fromIPv4Address(conn.getSecondHost()) + 
-							" size: " + shuffleRecord.get(conn) + "\n");
-				}
-				LOG.info(sb.toString());
+/*				LOG.info("### in recordShuffleInMRTable, task tracker: " + report.getTaskID().toString() +
+						", jobId: " + jobId + ", reducerId: " + reducerId + 
+						", reducerInfo.serialNum: " + reduceInfo.serialNum + ", seralNum: " + serialNum);*/
 				//
-                SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
-				if(!shuffleRecord.containsKey(connection) || shuffleRecord.get(connection) == null) {
-					LOG.info("### " + InternetUtil.fromIPv4Address(mapper) + " to " + InternetUtil.fromIPv4Address(taskTrackerIPAddress)
-							 + " is not record");
-					continue;
+				if(reduceInfo.serialNum == serialNum)
+					return;
+				reduceInfo.serialNum = serialNum;
+				Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
+				for(Integer mapper : newMapInfoList.keySet()) {
+					if(!reduceInfo.mapping.containsKey(mapper) 
+					   || reduceInfo.mapping.get(mapper) == null)
+						continue;
+
+
+					int reduceShuffleBytes = reduceInfo.mapping.get(mapper).intValue();
+					int receivedBytes = newMapInfoList.get(mapper).intValue();
+					
+/*					LOG.info("### in reduceRecord, receive " + receivedBytes + 
+							" from " + InternetUtil.fromIPv4Address(mapper) +
+							", we have " + reduceShuffleBytes + " bytes, leave " + (reduceShuffleBytes - receivedBytes));*/
+					reduceShuffleBytes -= receivedBytes;
+					if(reduceShuffleBytes <=0)
+						reduceInfo.mapping.remove(mapper);
+					else
+						reduceInfo.mapping.put(mapper, reduceShuffleBytes);
+				
+					SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
+					if(!shuffleRecord.containsKey(connection) 
+					   || shuffleRecord.get(connection) == null) //should not happen...
+					{
+/*						LOG.info("### we have no connection [" + InternetUtil.fromIPv4Address(connection.getFirstHost()) +
+								", " + InternetUtil.fromIPv4Address(connection.getSecondHost()) + "] in mrJobInfoList");*/
+						continue;
+					}
+					int needToTransmissionBytes = shuffleRecord.get(connection).intValue();
+/*					LOG.info("### in mrJobInfo, needToTransmissionBytes: " + needToTransmissionBytes + 
+							 ", leave " + (needToTransmissionBytes - receivedBytes));*/
+
+					needToTransmissionBytes -= receivedBytes;
+					if(needToTransmissionBytes <=0)
+						shuffleRecord.remove(connection);
+					else
+						shuffleRecord.put(connection, needToTransmissionBytes);
+			        if(!mrJobInfoList.isChange)
+			            mrJobInfoList.serialNum += 1;
+			        mrJobInfoList.isChange = true;
 				}
-                int transmissionBytes = shuffleRecord.get(connection).intValue();
-                transmissionBytes -= newMapInfoList.get(mapper).intValue();
-                if(transmissionBytes <= 0)
-                    shuffleRecord.remove(connection);
-                else
-                    shuffleRecord.put(connection, transmissionBytes);
-                if(!mrJobInfoList.isChange)
-                    mrJobInfoList.serialNum += 1;
-                mrJobInfoList.isChange = true;
-            }
-			showMRJobInfoListMessage();
+//				showMRJobInfoListMessage();
+			}
         }
     }
     public void cleanMapReduceFromMRTable(TaskStatus report) {
-        //modify mapRecord
-        synchronized(mapRecord) {
-            String jobId = getJobID(report);
-            for(Integer mapper : mapRecord.keySet()) {
-				MapReduceLocation mapLocation = mapRecord.get(mapper);
-                if(mapLocation.outputLocation.containsKey(jobId))
-                    mapLocation.outputLocation.remove(jobId);
-            }
-			LOG.info("in cleanMapReduceFromMRTable, clean job " + jobId);
-        }
+		synchronized(reduceRecord) {
+			synchronized(mapRecord) {
+				String jobId = getJobID(report);
+				cleanupJobInRecord(mapRecord.values(), jobId);
+				cleanupJobInRecord(reduceRecord.values(), jobId);
+				LOG.info("in cleanMapReduceFromMRTable, clean job " + jobId);
+			}
+		}
     }
-    private String getJobID(TaskStatus task) {
+	private String getJobID(TaskStatus task) {
         TaskAttemptID taskId = task.getTaskID();
         return taskId.getJobID().toString();
     }
-	private void showMapRecordMessage() {
-		StringBuffer mapRecordSB = new StringBuffer();
-		mapRecordSB.append("\n\tmapRecord:\n");
-		for(Integer mapper : mapRecord.keySet()) {
-			MapReduceLocation mapLocation = mapRecord.get(mapper);
-			mapRecordSB.append("\tmapper: " + InternetUtil.fromIPv4Address(mapper) + "\n");
-			for(String jobId : mapLocation.outputLocation.keySet()) {
-				mapRecordSB.append("\t\tJobID: " + jobId + "\n");
-				MapReduceInfo mapInfo = mapLocation.outputLocation.get(jobId);
-				for(Integer reducerId : mapInfo.mapping.keySet()) {
-					mapRecordSB.append("\t\t\tReducerID: " + reducerId + 
-									   ", size: " + mapInfo.mapping.get(reducerId) + "\n");
-				}
-			}
-
+	private int getTaskID(TaskStatus task) {
+        TaskAttemptID taskId = task.getTaskID();
+		return taskId.getTaskID().getId();
+	}
+	private MapReduceJobInfo createAndGetJobInfoInRecord(Integer key, 
+														 Map<Integer, MapReduceJobInfo> table) {
+		if(!table.containsKey(key)) {
+			table.put(key, new MapReduceJobInfo());
 		}
-		LOG.info(mapRecordSB.toString());
+		return table.get(key);
+	}
+	private MapReduceInfo createAndGetMRInfoInJob(String jobId, int taskId, 
+												  Map<MapReduceJobTask, MapReduceInfo> table) {
+		MapReduceJobTask key = new MapReduceJobTask(jobId, taskId);
+		if(!table.containsKey(key))
+			table.put(key, new MapReduceInfo());
+		MapReduceInfo mapReduceInfo = table.get(key);
+		return table.get(key);
+	}
+	private Integer createAndGetSizeInIDPair(Integer key, Map<Integer, Integer> table) {
+		if(!table.containsKey(key))
+			table.put(key, new Integer(0));
+		return table.get(key);
+	}
+	private Integer createAndGetSizeInConnection(SenderReceiverPair key,
+												 Map<SenderReceiverPair, Integer> table) {
+		if(!table.containsKey(key))
+			table.put(key, new Integer(0));
+		return table.get(key);
+	}
+	private void cleanupJobInRecord(Collection<MapReduceJobInfo> jobInfoSet, String jobId) {
+		for(MapReduceJobInfo jobInfo : jobInfoSet) {
+			Set<MapReduceJobTask> taskToRemove = new HashSet<MapReduceJobTask>();
+			for(MapReduceJobTask jobTask : jobInfo.taskInfo.keySet()) {
+				if(jobId.equals(jobTask.jobId))
+					taskToRemove.add(jobTask);
+			}
+			for(MapReduceJobTask jobTask : taskToRemove)
+				jobInfo.taskInfo.remove(jobTask);
+		}
 	}
 	private void showMRJobInfoListMessage() {
 		StringBuffer sb = new StringBuffer();

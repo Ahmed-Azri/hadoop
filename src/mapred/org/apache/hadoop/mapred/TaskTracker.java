@@ -49,6 +49,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import javax.crypto.SecretKey;
@@ -2061,7 +2062,9 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
     }
 
     // Force a rebuild of 'status' on the next iteration
-    status = null;                                
+    status = null;
+	//### modify
+	//
 
     return heartbeatResponse;
   }
@@ -2738,6 +2741,10 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
     private volatile boolean slotTaken = false;
     private TaskLauncher launcher;
 
+	//### modify
+	public AtomicBoolean isStatusSent = new AtomicBoolean(false);
+	//
+
     // The ugi of the user who is running the job. This contains all the tokens
     // too which will be populated during job-localization
     private UserGroupInformation ugi;
@@ -2918,8 +2925,18 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
           LOG.error("Error killing task " + task.getTaskID(), e);
         }
       }
-      
-      this.taskStatus.statusUpdate(taskStatus);
+      //### modify
+	  //if isStatusSent is false, we need to hold the previous mr job status
+	  //to prevent overwrite
+	  if(this.isStatusSent.getAndSet(false)) {
+		  LOG.info("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + ",  isStatusSent is true, as usual");
+	    this.taskStatus.statusUpdate(taskStatus);
+	  }
+	  else {
+		LOG.info("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + ", isStatusSent is false, update it");
+		this.taskStatus.statusUpdate(taskStatus, true);
+	  }
+	  //
       this.lastProgressReport = System.currentTimeMillis();
     }
 
@@ -3527,6 +3544,7 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
         LOG.warn("Failed validating JVM", ie);
         return false;
       }
+	  LOG.info("### in task tracker, status updte, task id: " + taskid.toString() + ", serialNum: " + taskStatus.getSerialNumber());
       tip.reportProgress(taskStatus);
       return true;
     } else {
@@ -3838,6 +3856,8 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
       }
       result.add((TaskStatus)status.clone());
       status.clearStatus();
+	  tip.isStatusSent.set(true);
+	  LOG.info("### in clone and reset running task status, task id: " + status.getTaskID().toString() + ", serialNum: " + status.getSerialNumber());
     }
     return result;
   }

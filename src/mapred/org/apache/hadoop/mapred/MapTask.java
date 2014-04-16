@@ -700,7 +700,6 @@ class MapTask extends Task {
         };
       }
     }
-
     @Override
     public void write(K key, V value) throws IOException, InterruptedException {
       //### modify
@@ -727,14 +726,16 @@ class MapTask extends Task {
 
           int mapOutputSize = openflowMapReduceInformation.get(partitionerNumber);
           openflowMapReduceInformation.put(partitionerNumber, mapOutputSize + currentMappingOutputSize);
-        } finally {
-          openflowLock.unlock();
-        }
-/*      LOG.info("### currentMappingOutputSize is " + Integer.toString(currentMappingOutputSize) +
+/*		  totalSize = mapOutputSize + currentMappingOutputSize + totalSize;
+		  LOG.info("### currentMappingOutputSize is " + Integer.toString(currentMappingOutputSize) +
                 ", currentKeySize is " + Integer.toString(currentMappingKeyOutputSize) +
                 ", currentValueSize is " + Integer.toString(currentMappingValueOutputSize) +
                 ", mapOutputSize is " + Integer.toString(mapOutputSize) +
-                ", currentTotal is " + Integer.toString(mapOutputSize + currentMappingOutputSize));*/
+                ", currentTotal is " + Integer.toString(mapOutputSize + currentMappingOutputSize) +
+				", totalSize is " + totalSize);*/
+        } finally {
+          openflowLock.unlock();
+        }
       }
       //
       collector.collect(key, value, partitionerNumber);

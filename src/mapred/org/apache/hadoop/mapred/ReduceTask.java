@@ -1345,8 +1345,17 @@ class ReduceTask extends Task {
             readError = false;
             try {
               shuffleClientMetrics.threadBusy();
+			  //
+			  SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+			  LOG.info("### Start " + loc.taskOutput.getHost() + " " + sdf.format(new Date()));
+			  //
               start(loc);
               size = copyOutput(loc);
+			  //
+			  totalSize += size;
+			  LOG.info("### End " + loc.taskOutput.getHost() + " " + sdf.format(new Date())
+			       + " " + size + " " + totalSize);
+			  //
               shuffleClientMetrics.successFetch();
               error = CopyOutputErrorType.NO_ERROR;
             } catch (IOException e) {
@@ -1733,8 +1742,6 @@ class ReduceTask extends Task {
         }
         //
 
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-		LOG.info("### Start " + remoteHostname + " " + sdf.format(new Date()));
         int bytesRead = 0;
         try {
           int n = input.read(shuffleData, 0, shuffleData.length);
@@ -1770,9 +1777,6 @@ class ReduceTask extends Task {
 
           input.close();
 
-		  totalSize += bytesRead;
-		  LOG.info("### End " + remoteHostname + " " + sdf.format(new Date())
-			       + " " + bytesRead + " " + totalSize);
         } catch (IOException ioe) {
           LOG.info("Failed to shuffle from " + mapOutputLoc.getTaskAttemptId(), 
                    ioe);

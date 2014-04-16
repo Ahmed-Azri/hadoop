@@ -13,7 +13,7 @@
   </description>
 </property>
 <property>
-	<name>slave.host.name</name>
-	<value>${local.bind.address}</value>
+  <name>slave.host.name</name>
+  <value>${local.bind.address}</value>
 </property>
 </configuration>
