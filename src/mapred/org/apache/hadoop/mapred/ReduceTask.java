@@ -1744,20 +1744,7 @@ class ReduceTask extends Task {
 
             // indicate we're making progress
             //### modified
-            if(openflowEnabled) {
-              openflowLock.lock();
-              try {
-				if(!openflowMapReduceInformation.containsKey(remoteHostIPAddress) ||
-				   openflowMapReduceInformation.get(remoteHostIPAddress) == null)
-					openflowMapReduceInformation.put(remoteHostIPAddress, new Integer(0));
-                int receivedBytes = openflowMapReduceInformation.get(remoteHostIPAddress).intValue();
-				LOG.info("### get " + n + " bytes from " + remoteHostname + ", original has " + receivedBytes + ", not total " + (receivedBytes + n));
-                receivedBytes += n;
-                openflowMapReduceInformation.put(remoteHostIPAddress, receivedBytes);
-              } finally {
-                openflowLock.unlock();
-              }
-            }
+			updateReduceInfoInOpenFlowTable(remoteHostIPAddress, n);
             //
             reporter.progress();
             n = input.read(shuffleData, bytesRead, 
@@ -1867,11 +1854,19 @@ class ReduceTask extends Task {
             readError = true;
             throw ioe;
           }
+
+		  //### modify
+		  String remoteHostname = mapOutputLoc.taskOutput.getHost();
+		  Integer remoteHostIPAddress = hostToIPMapping.get(remoteHostname);
+		  //
           while (n > 0) {
             bytesRead += n;
             shuffleClientMetrics.inputBytes(n);
             output.write(buf, 0, n);
 
+            //### modified
+			updateReduceInfoInOpenFlowTable(remoteHostIPAddress, n);
+            //
             // indicate we're making progress
             reporter.progress();
             try {
@@ -1933,7 +1928,25 @@ class ReduceTask extends Task {
         return mapOutput;
 
       }
-      
+	  //### modify
+      private void updateReduceInfoInOpenFlowTable(Integer remoteHostIPAddress, int currentReceivedBytes) {
+        if(openflowEnabled) {
+          openflowLock.lock();
+          try {
+		    if(!openflowMapReduceInformation.containsKey(remoteHostIPAddress) ||
+		    openflowMapReduceInformation.get(remoteHostIPAddress) == null)
+		      openflowMapReduceInformation.put(remoteHostIPAddress, new Integer(0));
+            int receivedBytes = openflowMapReduceInformation.get(remoteHostIPAddress).intValue();
+//		    LOG.info("### get " + currentReceivedBytes + " bytes from " + remoteHostname + 
+//					 ", original has " + receivedBytes + ", not total " + (receivedBytes + currentReceivedBytes));
+            receivedBytes += currentReceivedBytes;
+            openflowMapReduceInformation.put(remoteHostIPAddress, receivedBytes);
+          } finally {
+            openflowLock.unlock();
+          }
+		}
+	  }
+	  //
     } // MapOutputCopier
     
     private void configureClasspath(JobConf conf)
