@@ -369,10 +369,6 @@ class MapTask extends Task {
       return;
     }
 
-    //### modify
-//  LOG.info("### in MapTask, job.getOpenFlowEnabled is " + job.getOpenFlowEnabled() +
-//          ", ip is " + job.getOpenFlowController());
-
     openflowEnabled = job.getOpenFlowEnabled();
     if(openflowEnabled)
       openflowMapReduceInformation = new HashMap<Integer, Integer>();

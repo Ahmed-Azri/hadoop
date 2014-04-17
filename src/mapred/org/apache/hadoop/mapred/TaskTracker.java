@@ -2929,16 +2929,10 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
       //### modify
 	  //if isStatusSent is false, we need to hold the previous mr job status
 	  //to prevent overwrite
-	  if(this.isStatusSent.getAndSet(false)) {
-		LOG.info("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + 
-				  ", isStatusSent is true, as usual");
+	  if(this.isStatusSent.getAndSet(false))
 	    this.taskStatus.statusUpdate(taskStatus);
-	  }
-	  else {
-		LOG.info("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + 
-				 ", isStatusSent is false, update it");
+	  else
 		this.taskStatus.statusUpdate(taskStatus, true);
-	  }
 	  //
       this.lastProgressReport = System.currentTimeMillis();
     }
@@ -3547,9 +3541,6 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
         LOG.warn("Failed validating JVM", ie);
         return false;
       }
-	  LOG.info("### in task tracker, status updte, task id: " + taskid.toString() + 
-			   ", serialNum: " + taskStatus.getSerialNumber() + 
-			   ", size: " + taskStatus.getMapReduceInfoNum());
       tip.reportProgress(taskStatus);
       return true;
     } else {
@@ -3862,10 +3853,6 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
       result.add((TaskStatus)status.clone());
       status.clearStatus();
 	  tip.isStatusSent.set(true);
-	  LOG.info("### in clone and reset running task status, task id: " 
-			   + status.getTaskID().toString() + 
-			   ", serialNum: " + status.getSerialNumber() + 
-			   ", size: " + status.getMapReduceInfoNum());
     }
     return result;
   }

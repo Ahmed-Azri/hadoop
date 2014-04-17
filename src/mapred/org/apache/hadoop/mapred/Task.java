@@ -710,15 +710,6 @@ abstract public class Task implements Writable, Configurable {
                                         counters,
                                         serialNumber,
                                         openflowMapReduceInformation);
-				StringBuffer sb = new StringBuffer();
-				sb.append("\n\t### in reporter, phase: " + taskStatus.getPhase() + ", state: " + taskStatus.getRunState() + 
-						  "\n\tdump openflowMapReduceInformation, serialNum: " + serialNumber + ", table size = " + openflowMapReduceInformation.size() + "\n");
-				for(Integer i : openflowMapReduceInformation.keySet())
-					if(isMapTask())
-						sb.append("\t\tpartition: " + i + ", size: " + openflowMapReduceInformation.get(i) + "\n");
-					else
-						sb.append("\t\tmapper: " + InternetUtil.fromIPv4Address(i) + ", size: " + openflowMapReduceInformation.get(i) + "\n");
-				LOG.info(sb.toString());
                 openflowMapReduceInformation = new HashMap<Integer, Integer>();
                 serialNumber++;
               } finally {
@@ -997,7 +988,6 @@ abstract public class Task implements Writable, Configurable {
                                 counters,
                                 serialNumber,
                                 openflowMapReduceInformation);
-  	    LOG.info("### last update: phase: " + taskStatus.getPhase() + ", state: " + taskStatus.getRunState() + ", mr num : " + taskStatus.getMapReduceInfoNum());
         openflowMapReduceInformation = new HashMap<Integer, Integer>();
         serialNumber++;
       } finally {

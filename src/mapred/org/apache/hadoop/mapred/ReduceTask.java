@@ -1430,7 +1430,6 @@ class ReduceTask extends Task {
                                 loc.getTaskAttemptId() + " from " + 
                                 loc.getHost());
         }
-//		LOG.info("#### after getMapOutput from " + loc.taskOutput.getHost());
         
         // The size of the map-output
         long bytes = mapOutput.compressedSize;
@@ -1522,8 +1521,6 @@ class ReduceTask extends Task {
               "Got invalid response code " + rc + " from " + url +
               ": " + connection.getResponseMessage());
         }
-		LOG.info("#### get connection respond from " + mapOutputLoc.taskOutput.getHost() +
-				 ", remote port: " + url.getPort());
 
         // Validate header from map output
         TaskAttemptID mapId = null;
@@ -1937,8 +1934,6 @@ class ReduceTask extends Task {
 		    openflowMapReduceInformation.get(remoteHostIPAddress) == null)
 		      openflowMapReduceInformation.put(remoteHostIPAddress, new Integer(0));
             int receivedBytes = openflowMapReduceInformation.get(remoteHostIPAddress).intValue();
-//		    LOG.info("### get " + currentReceivedBytes + " bytes from " + remoteHostname + 
-//					 ", original has " + receivedBytes + ", not total " + (receivedBytes + currentReceivedBytes));
             receivedBytes += currentReceivedBytes;
             openflowMapReduceInformation.put(remoteHostIPAddress, receivedBytes);
           } finally {

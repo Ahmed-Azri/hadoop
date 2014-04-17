@@ -428,7 +428,6 @@ public abstract class TaskStatus implements Writable, Cloneable {
 	if(status.isOpenFlowEnabled()) {
 	  if(this.mapReduceInfo == null)
 		this.mapReduceInfo = new HashMap<Integer, Integer>();
-	  int oldTblSize = this.mapReduceInfo.size();
 	  Map<Integer, Integer> newMapReduceInfo = status.getMapReduceInfo();
 	  for(Integer partitioner : newMapReduceInfo.keySet()) {
 		if(!this.mapReduceInfo.containsKey(partitioner)
@@ -439,10 +438,6 @@ public abstract class TaskStatus implements Writable, Cloneable {
 		this.mapReduceInfo.put(partitioner, oldTransmissionSize + newTransmissionSize);
 	  }
 	  this.mapReduceInfoNum = this.mapReduceInfo.size();
-	  LOG.info("\n\t### in task status, hold mr job, status.serialNum: " + status.getSerialNumber() + 
-			   ", this.serialNum: " + this.serialNumber + 
-			   ", this.tbl size: " + oldTblSize + ", status.tbl size: " + newMapReduceInfo.size() +
-			   ", new tbl size: " + this.mapReduceInfoNum);
 	  this.serialNumber = status.getSerialNumber();
 	}
   }
