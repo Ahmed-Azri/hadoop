@@ -13,7 +13,7 @@ public class MRJobInfoList {
     public Map<SenderReceiverPair, Integer> mrJobInfo;
 
     public MRJobInfoList() {
-        serialNum = 0;
+        serialNum = -1;
         isChange = false;
         mrJobInfoNum = 0;
         mrJobInfo = new HashMap<SenderReceiverPair, Integer>();
