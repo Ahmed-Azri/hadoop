@@ -307,8 +307,6 @@ public class OpenFlowCommunicateClient extends Thread {
 		int mapperId = getTaskID(report);
         Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
         if(newMapInfoList == null) {
-			LOG.info("### receive report from " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-					 " ,no map reduce list");
 			return;
 		}
 
@@ -318,21 +316,18 @@ public class OpenFlowCommunicateClient extends Thread {
 		MapReduceInfo mapInfo = mapJobInfo.taskInfo.get(mapJobTask);
 
 		synchronized(mapInfo) {
-			if(mapInfo.serialNum == serialNum) {
-			LOG.info("### receive report from " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-					 ", serial num the same:" + serialNum + ", list size: " + newMapInfoList.size());
+			if(mapInfo.serialNum == serialNum)
 				return;
-			}
-			LOG.info("@@@ in recordMap, mapper: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
+/*			LOG.info("@@@ in recordMap, mapper: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
 					 ", origin serialNum: " + mapInfo.serialNum +
-					 ", new serialNum: " + serialNum + ", receive tbl size: " + newMapInfoList.size());
+					 ", new serialNum: " + serialNum + ", receive tbl size: " + newMapInfoList.size());*/
 			mapInfo.serialNum = serialNum;
 			for(Integer reducerId : newMapInfoList.keySet()) {
 				int receivedBytes = getSizeInIDPair(reducerId, mapInfo.mapping).intValue();
 				int newReceivedBytes = newMapInfoList.get(reducerId).intValue();
 				mapInfo.mapping.put(reducerId, receivedBytes + newReceivedBytes);
-				LOG.info("### in recordMap, reducerId: " + reducerId + ", old size: " + receivedBytes + 
-						 ", new size: " + newReceivedBytes + ", total: " + (receivedBytes + newReceivedBytes));
+/*				LOG.info("### in recordMap, reducerId: " + reducerId + ", old size: " + receivedBytes + 
+						 ", new size: " + newReceivedBytes + ", total: " + (receivedBytes + newReceivedBytes));*/
 			}
 		}
     }
