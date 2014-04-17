@@ -4554,19 +4554,24 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
       if(openflowClient != null) {
         switch(report.getPhase()) {
           case MAP:
+			LOG.info("!!! get status from " + trackerName + ", task phase is MAP");
             openflowClient.recordMapInMRTable(taskTrackerIPAddress, report);
             break;
           case SHUFFLE:
+			LOG.info("!!! get status from " + trackerName + ", task phase is SHUFFLE");
             openflowClient.recordShuffleInMRTable(taskTrackerIPAddress,report);
             break;
   		  case SORT:
 		  case REDUCE:
+			LOG.info("!!! get status from " + trackerName + ", task phase is SORT/REDUCE");
 			openflowClient.recordReduce(taskTrackerIPAddress, report);
 			break;
           case CLEANUP:
+			LOG.info("!!! get status from " + trackerName + ", task phase is CLEANUP");
             openflowClient.cleanMapReduceFromMRTable(report);
             break;
 		  default:
+			LOG.info("!!! get status from " + trackerName + ", task phase is NONE");
 			break;
         }
       }

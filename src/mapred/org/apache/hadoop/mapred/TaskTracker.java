@@ -3863,7 +3863,8 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
 	  tip.isStatusSent.set(true);
 	  LOG.info("### in clone and reset running task status, task id: " 
 			   + status.getTaskID().toString() + 
-			   ", serialNum: " + status.getSerialNumber());
+			   ", serialNum: " + status.getSerialNumber() + 
+			   ", size: " + status.getMapReduceInfoNum());
     }
     return result;
   }
