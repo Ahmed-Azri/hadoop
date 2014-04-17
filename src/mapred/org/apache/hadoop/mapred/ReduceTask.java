@@ -1737,7 +1737,9 @@ class ReduceTask extends Task {
           try {
             InetAddress remoteHostAddress = InetAddress.getByName(remoteHostname);
             remoteHostIPAddress = InternetUtil.toIPv4Address(remoteHostAddress.getHostAddress());
+			LOG.info("remote host IP address: " + InternetUtil.fromIPv4Address(remoteHostIPAddress));
           } catch(UnknownHostException e) {
+			  LOG.error("### can not get address from " + remoteHostname, e);
           }
         }
         //
@@ -1758,6 +1760,7 @@ class ReduceTask extends Task {
 				   openflowMapReduceInformation.get(remoteHostIPAddress) == null)
 					openflowMapReduceInformation.put(remoteHostIPAddress, new Integer(0));
                 int receivedBytes = openflowMapReduceInformation.get(remoteHostIPAddress).intValue();
+				LOG.info("### get " + n + " bytes from " + remoteHostname + ", original has " + receivedBytes + ", not total " + (receivedBytes + n));
                 receivedBytes += n;
                 openflowMapReduceInformation.put(remoteHostIPAddress, receivedBytes);
               } finally {

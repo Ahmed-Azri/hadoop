@@ -336,6 +336,11 @@ public class OpenFlowCommunicateClient extends Thread {
 		synchronized(reduceInfo) {
 			if(reduceInfo.serialNum == serialNum)
 				return;
+
+			LOG.info("@@@ in recordShuffleInMRTable, receive from " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
+					", origin serialNum: " + reduceInfo.serialNum + ", new serialNum: " + serialNum + 
+					", newMapInfoList.size is " + newMapInfoList.size());
+
 			reduceInfo.serialNum = serialNum;
 			for(Integer mapper : newMapInfoList.keySet()) {
 				if(!reduceInfo.mapping.containsKey(mapper) 
