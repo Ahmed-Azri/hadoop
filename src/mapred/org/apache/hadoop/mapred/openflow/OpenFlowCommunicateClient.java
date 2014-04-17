@@ -247,7 +247,6 @@ public class OpenFlowCommunicateClient extends Thread {
             out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());
             mrJobInfoList.write(out);
 			mrJobInfoList.isChange = false;
-			LOG.info("### in send mr job info, mrJobInfoList.size: " + mrJobInfoList.mrJobInfoNum);
         }
     }
 
@@ -346,6 +345,7 @@ public class OpenFlowCommunicateClient extends Thread {
 				int reduceShuffleBytes = reduceInfo.mapping.get(mapper).intValue();
 				int receivedBytes = newMapInfoList.get(mapper).intValue();
 					
+				LOG.info("### in recordShuffleInMRTable, mapper: " + InternetUtil.fromIPv4Address(mapper) + ", size: " + receivedBytes);
 				reduceShuffleBytes -= receivedBytes;
 				if(reduceShuffleBytes <=0)
 					reduceInfo.mapping.remove(mapper);
@@ -464,10 +464,10 @@ public class OpenFlowCommunicateClient extends Thread {
 	private void showMRJobInfoListMessage() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("\n\tMRJobInfoList, serialNum: " + mrJobInfoList.serialNum + 
-				"isChange: " + mrJobInfoList.isChange + "\n");
+				" isChange: " + mrJobInfoList.isChange + "\n");
 		for(SenderReceiverPair connection : mrJobInfoList.mrJobInfo.keySet()) {
-			sb.append("\t\tSender: " + InternetUtil.fromIPv4Address(connection.getFirstHost()) + 
-					  ", Receiver:" + InternetUtil.fromIPv4Address(connection.getSecondHost()) + 
+			sb.append("\t\tSrc: " + InternetUtil.fromIPv4Address(connection.getFirstHost()) + 
+					  ", Dst:" + InternetUtil.fromIPv4Address(connection.getSecondHost()) + 
 					  ", size: " + mrJobInfoList.mrJobInfo.get(connection) + "\n");
 		}
 		LOG.info(sb.toString());

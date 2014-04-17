@@ -60,6 +60,10 @@ import org.apache.hadoop.util.ResourceCalculatorPlugin.ProcResourceValues;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 
+//### modify
+import org.apache.hadoop.mapred.openflow.InternetUtil;
+//
+
 /** 
  * Base class for tasks.
  * 
@@ -700,7 +704,10 @@ abstract public class Task implements Writable, Configurable {
 				StringBuffer sb = new StringBuffer();
 				sb.append("\n\tdump openflowMapReduceInformation, serialNum: " + serialNumber + ", table size = " + openflowMapReduceInformation.size() + "\n");
 				for(Integer i : openflowMapReduceInformation.keySet())
-					sb.append("\t\tpartition: " + i + ", size: " + openflowMapReduceInformation.get(i) + "\n");
+					if(isMapTask())
+						sb.append("\t\tpartition: " + i + ", size: " + openflowMapReduceInformation.get(i) + "\n");
+					else
+						sb.append("\t\tmapper: " + InternetUtil.fromIPv4Address(i) + ", size: " + openflowMapReduceInformation.get(i) + "\n");
 				LOG.info(sb.toString());
                 openflowMapReduceInformation = new HashMap<Integer, Integer>();
                 serialNumber++;
