@@ -306,8 +306,11 @@ public class OpenFlowCommunicateClient extends Thread {
         String jobId = getJobID(report);
 		int mapperId = getTaskID(report);
         Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
-        if(newMapInfoList == null)
+        if(newMapInfoList == null) {
+			LOG.info("### receive report from " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
+					 " ,no map reduce list");
 			return;
+		}
 
 		long serialNum = report.getSerialNumber();
 		MapReduceJobInfo mapJobInfo = mapRecord.get(taskTrackerIPAddress);
@@ -315,8 +318,11 @@ public class OpenFlowCommunicateClient extends Thread {
 		MapReduceInfo mapInfo = mapJobInfo.taskInfo.get(mapJobTask);
 
 		synchronized(mapInfo) {
-			if(mapInfo.serialNum == serialNum)
+			if(mapInfo.serialNum == serialNum) {
+			LOG.info("### receive report from " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
+					 ", serial num the same:" + serialNum + ", list size: " + newMapInfoList.size());
 				return;
+			}
 			LOG.info("@@@ in recordMap, mapper: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
 					 ", origin serialNum: " + mapInfo.serialNum +
 					 ", new serialNum: " + serialNum + ", receive tbl size: " + newMapInfoList.size());

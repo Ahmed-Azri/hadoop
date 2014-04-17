@@ -3548,7 +3548,8 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
         return false;
       }
 	  LOG.info("### in task tracker, status updte, task id: " + taskid.toString() + 
-			   ", serialNum: " + taskStatus.getSerialNumber());
+			   ", serialNum: " + taskStatus.getSerialNumber() + 
+			   ", size: " + taskStatus.getMapReduceInfoNum());
       tip.reportProgress(taskStatus);
       return true;
     } else {
