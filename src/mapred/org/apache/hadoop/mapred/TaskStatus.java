@@ -445,8 +445,6 @@ public abstract class TaskStatus implements Writable, Cloneable {
 			   ", new tbl size: " + this.mapReduceInfoNum);
 	  this.serialNumber = status.getSerialNumber();
 	}
-	else
-	  this.mapReduceInfoNum = 0;
   }
   //
 
