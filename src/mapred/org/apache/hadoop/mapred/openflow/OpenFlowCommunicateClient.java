@@ -356,9 +356,8 @@ public class OpenFlowCommunicateClient extends Thread {
 					Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
 					SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
 					if(!shuffleRecord.containsKey(connection) 
-					   || shuffleRecord.get(connection) == null) { //should not happen...
+					   || shuffleRecord.get(connection) == null) //should not happen...
 						continue;
-					}
 					int needToTransmissionBytes = shuffleRecord.get(connection).intValue();
 
 					needToTransmissionBytes -= receivedBytes;
@@ -374,6 +373,45 @@ public class OpenFlowCommunicateClient extends Thread {
 			}
 		}
     }
+	public void recordReduce(int taskTrackerIPAddress, TaskStatus report) {
+		String jobId = getJobID(report);
+		int reducerId = getTaskID(report);
+		Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
+		if(newMapInfoList == null)
+			return;
+
+		long serialNum = report.getSerialNumber();
+		MapReduceJobInfo reduceJobInfo = reduceRecord.get(taskTrackerIPAddress);
+		MapReduceJobTask reduceJobTask = new MapReduceJobTask(jobId, reducerId);
+		MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
+
+		synchronized(reduceInfo) {
+			for(Integer mapper : newMapInfoList.keySet()) {
+				if(!reduceInfo.mapping.containsKey(mapper) 
+				   || reduceInfo.mapping.get(mapper) == null)
+					continue;
+				//clean up
+				int reduceShuffleBytes = reduceInfo.mapping.get(mapper).intValue();
+				reduceInfo.mapping.remove(mapper);
+				synchronized(mrJobInfoList) {
+					Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
+					SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
+					if(!shuffleRecord.containsKey(connection) 
+					   || shuffleRecord.get(connection) == null) //should not happen...
+						continue;
+					int needToTransmissionBytes = shuffleRecord.get(connection).intValue();
+					needToTransmissionBytes -= reduceShuffleBytes;
+					if(needToTransmissionBytes <=0)
+						shuffleRecord.remove(connection);
+					else
+						shuffleRecord.put(connection, needToTransmissionBytes);
+				    if(!mrJobInfoList.isChange)
+				        mrJobInfoList.serialNum += 1;
+				    mrJobInfoList.isChange = true;
+				}
+			}
+		}
+	}
     public void cleanMapReduceFromMRTable(TaskStatus report) {
 		String jobId = getJobID(report);
 		cleanupJobInRecord(mapRecord.values(), jobId);

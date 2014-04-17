@@ -4548,6 +4548,10 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
           case SHUFFLE:
             openflowClient.recordShuffleInMRTable(taskTrackerIPAddress,report);
             break;
+  		  case SORT:
+		  case REDUCE:
+			openflowClient.recordReduce(taskTrackerIPAddress, report);
+			break;
           case CLEANUP:
             openflowClient.cleanMapReduceFromMRTable(report);
             break;
