@@ -1731,18 +1731,9 @@ class ReduceTask extends Task {
                         mapOutputLoc.getTaskAttemptId(), shuffleData, compressedLength);
         
         //### modified
-        int remoteHostIPAddress = 0;
-        String remoteHostname = mapOutputLoc.taskOutput.getHost();
-        if(openflowEnabled) {
-          try {
-            InetAddress remoteHostAddress = InetAddress.getByName(remoteHostname);
-            remoteHostIPAddress = InternetUtil.toIPv4Address(remoteHostAddress.getHostAddress());
-			LOG.info("remote host IP address: " + InternetUtil.fromIPv4Address(remoteHostIPAddress));
-          } catch(UnknownHostException e) {
-			  LOG.error("### can not get address from " + remoteHostname, e);
-          }
-        }
-        //
+		String remoteHostname = mapOutputLoc.taskOutput.getHost();
+		Integer remoteHostIPAddress = hostToIPMapping.get(remoteHostname);
+		//
 
         int bytesRead = 0;
         try {

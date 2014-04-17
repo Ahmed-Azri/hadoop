@@ -126,7 +126,16 @@ import org.apache.hadoop.mapred.openflow.InternetUtil;
  *******************************************************/
 public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
     Runnable, TaskTrackerMXBean {
-  
+  //### modify
+  private static Map<String, Integer> hostToIPMapping = new HashMap<String, Integer>();
+  static {
+    for(int i=1; i <= 16; i++) {
+	  String hostName = "datanode" + Integer.toString(i);
+	  String ipAddress = "192.168.2." + Integer.toString(i);
+	  hostToIPMapping.put(hostName, InternetUtil.toIPv4Address(ipAddress));
+	}
+  }
+  // 
   /**
    * @deprecated
    */
@@ -811,13 +820,7 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
        fConf.get("mapred.tasktracker.dns.nameserver","default"));
     }
     //### modified
-    try {
-      InetAddress localHostInetAddress = InetAddress.getByName(this.localHostname);
-      this.localHostIPAddress = InternetUtil.toIPv4Address(localHostInetAddress.getHostAddress());
-    } catch(UnknownHostException e) {
-      //this should not happen
-      LOG.error("get " + this.localHostname + " ip address error", e);
-    }
+	this.localHostIPAddress = hostToIPMapping.get(this.localHostname).intValue();
     //
 
     final String dirs = localStorage.getDirsString();

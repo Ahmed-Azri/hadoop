@@ -132,6 +132,17 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
     RefreshAuthorizationPolicyProtocol, AdminOperationsProtocol,
     JobTrackerMXBean {
 
+  //### modify
+  private static Map<String, Integer> hostToIPMapping = new HashMap<String, Integer>();
+  static {
+    for(int i=1; i <= 16; i++) {
+	  String hostName = "datanode" + Integer.toString(i);
+	  String ipAddress = "192.168.2." + Integer.toString(i);
+	  hostToIPMapping.put(hostName, InternetUtil.toIPv4Address(ipAddress));
+	}
+  }
+  //
+
   static{
     Configuration.addDefaultResource("mapred-default.xml");
     Configuration.addDefaultResource("mapred-site.xml");

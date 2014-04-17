@@ -98,7 +98,16 @@ abstract public class Task implements Writable, Configurable {
     VIRTUAL_MEMORY_BYTES,
     COMMITTED_HEAP_BYTES
   }
-  
+   //### modify
+  public static Map<String, Integer> hostToIPMapping = new HashMap<String, Integer>();
+  static {
+    for(int i=1; i <= 16; i++) {
+	  String hostName = "datanode" + Integer.toString(i);
+	  String ipAddress = "192.168.2." + Integer.toString(i);
+	  hostToIPMapping.put(hostName, InternetUtil.toIPv4Address(ipAddress));
+	}
+  }
+  // 
   /**
    * Counters to measure the usage of the different file systems.
    * Always return the String array with two elements. First one is the name of  
