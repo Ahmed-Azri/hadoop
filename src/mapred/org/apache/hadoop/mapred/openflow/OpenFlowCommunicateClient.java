@@ -246,6 +246,7 @@ public class OpenFlowCommunicateClient extends Thread {
         synchronized(mrJobInfoList) {
             out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());
             mrJobInfoList.write(out);
+			mrJobInfoList.isChange = false;
         }
     }
 
@@ -367,6 +368,7 @@ public class OpenFlowCommunicateClient extends Thread {
 				    if(!mrJobInfoList.isChange)
 				        mrJobInfoList.serialNum += 1;
 				    mrJobInfoList.isChange = true;
+					LOG.info("### in recordShuffle, mrJobInfoList.size: " + mrJobInfoList.mrJobInfoNum);
 					showMRJobInfoListMessage();
 				}
 			}
