@@ -259,6 +259,7 @@ public class OpenFlowCommunicateClient extends Thread {
     }
 	
     public void addReducerInfo(int taskTrackerIPAddress, String jobId, int reducerId) {
+		LOG.info("### in addReducer, " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ":" + reducerId);
 		for(Map.Entry<Integer, MapReduceJobInfo> mapRecordEntry : mapRecord.entrySet()) {
 			Integer mapper = mapRecordEntry.getKey();
 			if(mapper.equals(taskTrackerIPAddress))
@@ -282,6 +283,8 @@ public class OpenFlowCommunicateClient extends Thread {
 					synchronized(reduceInfo) {
 						int reduceReceiveBytes = getSizeInIDPair(mapper, reduceInfo.mapping).intValue();
 						reduceInfo.mapping.put(mapper, reduceReceiveBytes + newBytes);
+						LOG.info("### in addReducer, record reduceTbl, mapper: " + InternetUtil.fromIPv4Address(mapper) +
+								 ", size: " + newBytes + ", size in tbl: " + reduceReceiveBytes);
 					}
 
 					//modify mrJobInfoList
@@ -291,6 +294,8 @@ public class OpenFlowCommunicateClient extends Thread {
 							= new SenderReceiverPair(mapper, taskTrackerIPAddress);
 						int currentBytes = getSizeInConnection(connection, shuffleRecord).intValue();	
 						shuffleRecord.put(connection, currentBytes + newBytes);
+						LOG.info("### in addReducer, record mrJobInfo, mapper: " + InternetUtil.fromIPv4Address(mapper) +
+								 ", size: " + newBytes + ", size in tbl: " + currentBytes);
 					}
 
 				}
@@ -312,12 +317,16 @@ public class OpenFlowCommunicateClient extends Thread {
 		synchronized(mapInfo) {
 			if(mapInfo.serialNum == serialNum)
 				return;
-
+			LOG.info("@@@ in recordMap, mapper: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
+					 ", origin serialNum: " + mapInfo.serialNum +
+					 ", new serialNum: " + serialNum + ", receive tbl size: " + newMapInfoList.size());
 			mapInfo.serialNum = serialNum;
 			for(Integer reducerId : newMapInfoList.keySet()) {
 				int receivedBytes = getSizeInIDPair(reducerId, mapInfo.mapping).intValue();
 				int newReceivedBytes = newMapInfoList.get(reducerId).intValue();
 				mapInfo.mapping.put(reducerId, receivedBytes + newReceivedBytes);
+				LOG.info("### in recordMap, reducerId: " + reducerId + ", old size: " + receivedBytes + 
+						 ", new size: " + newReceivedBytes + ", total: " + (receivedBytes + newReceivedBytes));
 			}
 		}
     }
@@ -337,7 +346,7 @@ public class OpenFlowCommunicateClient extends Thread {
 			if(reduceInfo.serialNum == serialNum)
 				return;
 
-			LOG.info("@@@ in recordShuffleInMRTable, receive from " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
+			LOG.info("@@@ in recordShuffle, receive from " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) +
 					", origin serialNum: " + reduceInfo.serialNum + ", new serialNum: " + serialNum + 
 					", newMapInfoList.size is " + newMapInfoList.size());
 
@@ -349,8 +358,8 @@ public class OpenFlowCommunicateClient extends Thread {
 
 				int reduceShuffleBytes = reduceInfo.mapping.get(mapper).intValue();
 				int receivedBytes = newMapInfoList.get(mapper).intValue();
-					
-				LOG.info("### in recordShuffleInMRTable, mapper: " + InternetUtil.fromIPv4Address(mapper) + ", size: " + receivedBytes);
+
+				LOG.info("### in recordShuffle, mapper: " + InternetUtil.fromIPv4Address(mapper) + ", size: " + receivedBytes);
 				reduceShuffleBytes -= receivedBytes;
 				if(reduceShuffleBytes <=0)
 					reduceInfo.mapping.remove(mapper);
