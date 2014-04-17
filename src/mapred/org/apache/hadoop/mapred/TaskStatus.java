@@ -384,7 +384,20 @@ public abstract class TaskStatus implements Writable, Cloneable {
    * 
    * @param status updated status
    */
+  //### modify
   synchronized void statusUpdate(TaskStatus status) {
+    updateWithoutOpenFlow(status);
+	resetOpenFlowMessage(status);
+  }
+  synchronized void statusUpdate(TaskStatus status, boolean holdCurrentMRJob) {
+	if(!holdCurrentMRJob)
+	  statusUpdate(status);
+	else {
+	  updateWithoutOpenFlow(status);
+	  updateOpenFlowMessage(status);
+	}
+  }
+  private synchronized void updateWithoutOpenFlow(TaskStatus status) {
     this.progress = status.getProgress();
     this.runState = status.getRunState();
     this.stateString = status.getStateString();
@@ -402,63 +415,36 @@ public abstract class TaskStatus implements Writable, Cloneable {
     this.phase = status.getPhase();
     this.counters = status.getCounters();
     this.outputSize = status.outputSize;
-
-    //### modify
-    if(status.isOpenFlowEnabled())
-    {
-      this.mapReduceInfoNum = status.getMapReduceInfoNum();
+  }
+  private synchronized void resetOpenFlowMessage(TaskStatus status) {
+	if(status.isOpenFlowEnabled()) {
       this.mapReduceInfo = new HashMap<Integer, Integer>();
-      Map<Integer, Integer> newMapReduceInfo = status.getMapReduceInfo();
-      for(Integer partitioner : newMapReduceInfo.keySet())
-        this.mapReduceInfo.put(partitioner, newMapReduceInfo.get(partitioner));
-      this.serialNumber = status.getSerialNumber();
+	  updateOpenFlowMessage(status);
     }
     else
       this.mapReduceInfoNum = 0;
-    //
   }
-  //### modify
-  synchronized void statusUpdate(TaskStatus status, boolean holdCurrentMRJob) {
-	if(!holdCurrentMRJob)
-	  statusUpdate(status);
-	else {
-	  this.progress = status.getProgress();
-      this.runState = status.getRunState();
-      this.stateString = status.getStateString();
-      this.nextRecordRange = status.getNextRecordRange();
-
-      setDiagnosticInfo(status.getDiagnosticInfo());
-    
-      if (status.getStartTime() > 0) {
-        this.startTime = status.getStartTime(); 
-      }
-      if (status.getFinishTime() > 0) {
-        setFinishTime(status.getFinishTime()); 
-      }
-    
-      this.phase = status.getPhase();
-      this.counters = status.getCounters();
-      this.outputSize = status.outputSize;
-	  
-	  if(status.isOpenFlowEnabled()) {
-		if(this.mapReduceInfo == null)
-		  this.mapReduceInfo = new HashMap<Integer, Integer>();
-		Map<Integer, Integer> newMapReduceInfo = status.getMapReduceInfo();
-		for(Integer partitioner : newMapReduceInfo.keySet()) {
-			if(!this.mapReduceInfo.containsKey(partitioner)
-			   || this.mapReduceInfo.get(partitioner) == null)
-				this.mapReduceInfo.put(partitioner, new Integer(0));
-			int oldTransmissionSize = this.mapReduceInfo.get(partitioner).intValue();
-			int newTransmissionSize = newMapReduceInfo.get(partitioner).intValue();
-			this.mapReduceInfo.put(partitioner, oldTransmissionSize + newTransmissionSize);
-			LOG.info("\n\t### in task status, hold mr job, status.serialNum: " + status.getSerialNumber() + 
-					 ", this.serialNum: " + this.serialNumber + ", old size: " + oldTransmissionSize + 
-					 ", status size: " + newTransmissionSize + ", total: " + (oldTransmissionSize + newTransmissionSize));
-		}
-		this.mapReduceInfoNum = this.mapReduceInfo.size();
-		this.serialNumber = status.getSerialNumber();
+  private synchronized void updateOpenFlowMessage(TaskStatus status) {
+	if(status.isOpenFlowEnabled()) {
+	  if(this.mapReduceInfo == null)
+		this.mapReduceInfo = new HashMap<Integer, Integer>();
+	  Map<Integer, Integer> newMapReduceInfo = status.getMapReduceInfo();
+	  for(Integer partitioner : newMapReduceInfo.keySet()) {
+		if(!this.mapReduceInfo.containsKey(partitioner)
+		   || this.mapReduceInfo.get(partitioner) == null)
+		  this.mapReduceInfo.put(partitioner, new Integer(0));
+		int oldTransmissionSize = this.mapReduceInfo.get(partitioner).intValue();
+		int newTransmissionSize = newMapReduceInfo.get(partitioner).intValue();
+		this.mapReduceInfo.put(partitioner, oldTransmissionSize + newTransmissionSize);
+/*		LOG.info("\n\t### in task status, hold mr job, status.serialNum: " + status.getSerialNumber() + 
+				 ", this.serialNum: " + this.serialNumber + ", old size: " + oldTransmissionSize + 
+				 ", status size: " + newTransmissionSize + ", total: " + (oldTransmissionSize + newTransmissionSize));*/
 	  }
+	  this.mapReduceInfoNum = this.mapReduceInfo.size();
+	  this.serialNumber = status.getSerialNumber();
 	}
+	else
+	  this.mapReduceInfoNum = 0;
   }
   //
 

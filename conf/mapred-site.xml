@@ -57,7 +57,7 @@
 </property>
 <property>
 	<name>slave.host.name</name>
-		<value>${local.bind.address}</value>
+	<value>${local.bind.address}</value>
 </property>
 <property>
     <name>mapred.openflow.enabled</name>

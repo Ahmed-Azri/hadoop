@@ -2063,8 +2063,6 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
 
     // Force a rebuild of 'status' on the next iteration
     status = null;
-	//### modify
-	//
 
     return heartbeatResponse;
   }
@@ -2929,11 +2927,13 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
 	  //if isStatusSent is false, we need to hold the previous mr job status
 	  //to prevent overwrite
 	  if(this.isStatusSent.getAndSet(false)) {
-		  LOG.info("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + ",  isStatusSent is true, as usual");
+		LOG.debug("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + 
+				  ", isStatusSent is true, as usual");
 	    this.taskStatus.statusUpdate(taskStatus);
 	  }
 	  else {
-		LOG.info("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + ", isStatusSent is false, update it");
+		LOG.debug("\n\t### in tip.reportProgress, task: " + taskStatus.getTaskID().toString() + 
+				 ", isStatusSent is false, update it");
 		this.taskStatus.statusUpdate(taskStatus, true);
 	  }
 	  //
@@ -3544,7 +3544,8 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
         LOG.warn("Failed validating JVM", ie);
         return false;
       }
-	  LOG.info("### in task tracker, status updte, task id: " + taskid.toString() + ", serialNum: " + taskStatus.getSerialNumber());
+	  LOG.debug("### in task tracker, status updte, task id: " + taskid.toString() + 
+			   ", serialNum: " + taskStatus.getSerialNumber());
       tip.reportProgress(taskStatus);
       return true;
     } else {
@@ -3857,7 +3858,9 @@ public class TaskTracker implements MRConstants, TaskUmbilicalProtocol,
       result.add((TaskStatus)status.clone());
       status.clearStatus();
 	  tip.isStatusSent.set(true);
-	  LOG.info("### in clone and reset running task status, task id: " + status.getTaskID().toString() + ", serialNum: " + status.getSerialNumber());
+	  LOG.debug("### in clone and reset running task status, task id: " 
+			   + status.getTaskID().toString() + 
+			   ", serialNum: " + status.getSerialNumber());
     }
     return result;
   }
