@@ -271,9 +271,11 @@ public class OpenFlowCommunicateClient extends Thread {
 	}
     private void sendMRJobInfoToController() throws IOException {
         synchronized(mrJobInfoList) {
-            out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());
-            mrJobInfoList.write(out);
-			mrJobInfoList.isChange = false;
+			if(mrJobInfoList.isChange) {
+				out.writeInt(HadoopToControllerCommand.MR_JOB_CONTENT.getNum());
+				mrJobInfoList.write(out);
+				mrJobInfoList.isChange = false;
+			}
         }
     }
 
@@ -282,12 +284,14 @@ public class OpenFlowCommunicateClient extends Thread {
 	// **************************
     public void addMapperInfo(int taskTrackerIPAddress, String jobId, int mapperId) {
 		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
+		LOG.info("### add Mapper: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", simTaskTrackerIPAddress:" + simTaskTrackerIPAddress);
 		MapReduceJobInfo mapJobInfo = getMRJobInfoInTable(simTaskTrackerIPAddress, mapRecord);
 		getMRInfoInTable(jobId, mapperId, mapJobInfo.taskInfo);
     }
 	
     public void addReducerInfo(int taskTrackerIPAddress, String jobId, int reducerId) {
 		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
+		LOG.info("### add Reducer: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", simTaskTrackerIPAddress:" + simTaskTrackerIPAddress);
 		for(Map.Entry<Integer, MapReduceJobInfo> mapRecordEntry : mapRecord.entrySet()) {
 			Integer mapper = mapRecordEntry.getKey();
 			if(mapper.equals(simTaskTrackerIPAddress))
