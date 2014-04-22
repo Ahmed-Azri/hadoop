@@ -33,6 +33,33 @@ public class OpenFlowCommunicateClient extends Thread {
     static final Log LOG =
         LogFactory.getLog(OpenFlowCommunicateClient.class.getName());
 
+    protected static Map<Integer, Integer> SIM_IP_TO_REAL_IP;
+    protected static Map<Integer, Integer> REAL_IP_TO_SIM_IP;
+    static {
+        SIM_IP_TO_REAL_IP = new HashMap<Integer, Integer>();
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.1"), InternetUtil.toIPv4Address("192.168.2.1"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.2"), InternetUtil.toIPv4Address("192.168.2.2"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.3"), InternetUtil.toIPv4Address("192.168.2.3"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.4"), InternetUtil.toIPv4Address("192.168.2.4"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.5"), InternetUtil.toIPv4Address("192.168.2.5"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.6"), InternetUtil.toIPv4Address("192.168.2.6"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.7"), InternetUtil.toIPv4Address("192.168.2.7"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.9"), InternetUtil.toIPv4Address("192.168.2.8"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.10"), InternetUtil.toIPv4Address("192.168.2.9"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.11"), InternetUtil.toIPv4Address("192.168.2.10"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.12"), InternetUtil.toIPv4Address("192.168.2.11"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.13"), InternetUtil.toIPv4Address("192.168.2.12"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.14"), InternetUtil.toIPv4Address("192.168.2.13"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.15"), InternetUtil.toIPv4Address("192.168.2.14"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.16"), InternetUtil.toIPv4Address("192.168.2.15"));
+        SIM_IP_TO_REAL_IP.put(InternetUtil.toIPv4Address("1.0.1.17"), InternetUtil.toIPv4Address("192.168.2.16"));
+
+        REAL_IP_TO_SIM_IP = new HashMap<Integer, Integer>();
+        for(Integer simIP : SIM_IP_TO_REAL_IP.keySet())
+            REAL_IP_TO_SIM_IP.put(SIM_IP_TO_REAL_IP.get(simIP), simIP);
+    }
+
+
 	class MapReduceInfo {
 		long serialNum = -1;
 		public Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();
@@ -254,14 +281,16 @@ public class OpenFlowCommunicateClient extends Thread {
 	// Methods provided to hadoop
 	// **************************
     public void addMapperInfo(int taskTrackerIPAddress, String jobId, int mapperId) {
-		MapReduceJobInfo mapJobInfo = getMRJobInfoInTable(taskTrackerIPAddress, mapRecord);
+		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
+		MapReduceJobInfo mapJobInfo = getMRJobInfoInTable(simTaskTrackerIPAddress, mapRecord);
 		getMRInfoInTable(jobId, mapperId, mapJobInfo.taskInfo);
     }
 	
     public void addReducerInfo(int taskTrackerIPAddress, String jobId, int reducerId) {
+		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
 		for(Map.Entry<Integer, MapReduceJobInfo> mapRecordEntry : mapRecord.entrySet()) {
 			Integer mapper = mapRecordEntry.getKey();
-			if(mapper.equals(taskTrackerIPAddress))
+			if(mapper.equals(simTaskTrackerIPAddress))
 				continue;
 
 			MapReduceJobInfo mapJobInfo = mapRecordEntry.getValue();
@@ -277,7 +306,7 @@ public class OpenFlowCommunicateClient extends Thread {
 					int newBytes = mapInfo.mapping.get(reducerId);
 
 					//modify reduce record
-					MapReduceJobInfo reduceJobInfo = getMRJobInfoInTable(taskTrackerIPAddress, reduceRecord);
+					MapReduceJobInfo reduceJobInfo = getMRJobInfoInTable(simTaskTrackerIPAddress, reduceRecord);
 					MapReduceInfo reduceInfo = getMRInfoInTable(jobId, reducerId, reduceJobInfo.taskInfo);
 					synchronized(reduceInfo) {
 						int reduceReceiveBytes = getSizeInIDPair(mapper, reduceInfo.mapping).intValue();
@@ -288,7 +317,7 @@ public class OpenFlowCommunicateClient extends Thread {
 					synchronized(mrJobInfoList) {
 						Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
 						SenderReceiverPair connection
-							= new SenderReceiverPair(mapper, taskTrackerIPAddress);
+							= new SenderReceiverPair(mapper, simTaskTrackerIPAddress);
 						int currentBytes = getSizeInConnection(connection, shuffleRecord).intValue();	
 						shuffleRecord.put(connection, currentBytes + newBytes);
 					}
@@ -297,6 +326,7 @@ public class OpenFlowCommunicateClient extends Thread {
 		}
     }
     public void recordMapInMRTable(int taskTrackerIPAddress, TaskStatus report) {
+		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
         String jobId = getJobID(report);
 		int mapperId = getTaskID(report);
         Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
@@ -305,7 +335,7 @@ public class OpenFlowCommunicateClient extends Thread {
 		}
 
 		long serialNum = report.getSerialNumber();
-		MapReduceJobInfo mapJobInfo = mapRecord.get(taskTrackerIPAddress);
+		MapReduceJobInfo mapJobInfo = mapRecord.get(simTaskTrackerIPAddress);
 		MapReduceJobTask mapJobTask = new MapReduceJobTask(jobId, mapperId);
 		MapReduceInfo mapInfo = mapJobInfo.taskInfo.get(mapJobTask);
 
@@ -321,6 +351,7 @@ public class OpenFlowCommunicateClient extends Thread {
 		}
     }
     public void recordShuffleInMRTable(int taskTrackerIPAddress, TaskStatus report) {
+		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
 		String jobId = getJobID(report);
 		int reducerId = getTaskID(report);
 		Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
@@ -328,7 +359,7 @@ public class OpenFlowCommunicateClient extends Thread {
 			return;
 
 		long serialNum = report.getSerialNumber();
-		MapReduceJobInfo reduceJobInfo = reduceRecord.get(taskTrackerIPAddress);
+		MapReduceJobInfo reduceJobInfo = reduceRecord.get(simTaskTrackerIPAddress);
 		MapReduceJobTask reduceJobTask = new MapReduceJobTask(jobId, reducerId);
 		MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
 
@@ -353,7 +384,7 @@ public class OpenFlowCommunicateClient extends Thread {
 	
 				synchronized(mrJobInfoList) {
 					Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
-					SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
+					SenderReceiverPair connection = new SenderReceiverPair(mapper, simTaskTrackerIPAddress);
 					if(!shuffleRecord.containsKey(connection) 
 					   || shuffleRecord.get(connection) == null) //should not happen...
 						continue;
@@ -373,6 +404,7 @@ public class OpenFlowCommunicateClient extends Thread {
 		}
     }
 	public void recordReduce(int taskTrackerIPAddress, TaskStatus report) {
+		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
 		String jobId = getJobID(report);
 		int reducerId = getTaskID(report);
 		Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
@@ -380,7 +412,7 @@ public class OpenFlowCommunicateClient extends Thread {
 			return;
 
 		long serialNum = report.getSerialNumber();
-		MapReduceJobInfo reduceJobInfo = reduceRecord.get(taskTrackerIPAddress);
+		MapReduceJobInfo reduceJobInfo = reduceRecord.get(simTaskTrackerIPAddress);
 		MapReduceJobTask reduceJobTask = new MapReduceJobTask(jobId, reducerId);
 		MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
 
@@ -394,7 +426,7 @@ public class OpenFlowCommunicateClient extends Thread {
 				reduceInfo.mapping.remove(mapper);
 				synchronized(mrJobInfoList) {
 					Map<SenderReceiverPair, Integer> shuffleRecord = mrJobInfoList.mrJobInfo;
-					SenderReceiverPair connection = new SenderReceiverPair(mapper, taskTrackerIPAddress);
+					SenderReceiverPair connection = new SenderReceiverPair(mapper, simTaskTrackerIPAddress);
 					if(!shuffleRecord.containsKey(connection) 
 					   || shuffleRecord.get(connection) == null) //should not happen...
 						continue;
