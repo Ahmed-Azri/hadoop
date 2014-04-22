@@ -387,7 +387,8 @@ public class OpenFlowCommunicateClient extends Thread {
 				return;
 
 			reduceInfo.serialNum = serialNum;
-			for(Integer mapper : newMapInfoList.keySet()) {
+			for(Integer realWorldMapper : newMapInfoList.keySet()) {
+				Integer mapper = REAL_IP_TO_SIM_IP.get(realWorldMapper);
 				if(!reduceInfo.mapping.containsKey(mapper) 
 				   || reduceInfo.mapping.get(mapper) == null)
 					continue;
