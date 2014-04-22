@@ -343,6 +343,8 @@ public class OpenFlowCommunicateClient extends Thread {
 		MapReduceJobTask mapJobTask = new MapReduceJobTask(jobId, mapperId);
 		MapReduceInfo mapInfo = mapJobInfo.taskInfo.get(mapJobTask);
 
+		LOG.info("### in recordMapInMRTable, old: " + mapInfo.serialNum + ", new: " + serialNum);
+
 		synchronized(mapInfo) {
 			if(mapInfo.serialNum == serialNum)
 				return;
@@ -366,6 +368,8 @@ public class OpenFlowCommunicateClient extends Thread {
 		MapReduceJobInfo reduceJobInfo = reduceRecord.get(simTaskTrackerIPAddress);
 		MapReduceJobTask reduceJobTask = new MapReduceJobTask(jobId, reducerId);
 		MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
+
+		LOG.info("### in recordShuffleInMRTable, old: " + reduceInfo.serialNum + ", new: " + serialNum);
 
 		synchronized(reduceInfo) {
 			if(reduceInfo.serialNum == serialNum)
