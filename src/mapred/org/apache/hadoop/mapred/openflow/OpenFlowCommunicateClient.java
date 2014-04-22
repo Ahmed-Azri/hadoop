@@ -394,7 +394,7 @@ public class OpenFlowCommunicateClient extends Thread {
 					continue;
 
 				int reduceShuffleBytes = reduceInfo.mapping.get(mapper).intValue();
-				int receivedBytes = newMapInfoList.get(mapper).intValue();
+				int receivedBytes = newMapInfoList.get(realWorldMapper).intValue();
 
 				reduceShuffleBytes -= receivedBytes;
 				if(reduceShuffleBytes <=0)
@@ -440,7 +440,8 @@ public class OpenFlowCommunicateClient extends Thread {
 		MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
 
 		synchronized(reduceInfo) {
-			for(Integer mapper : newMapInfoList.keySet()) {
+			for(Integer realWorldMapper : newMapInfoList.keySet()) {
+				Integer mapper = REAL_IP_TO_SIM_IP.get(realWorldMapper);
 				if(!reduceInfo.mapping.containsKey(mapper) 
 				   || reduceInfo.mapping.get(mapper) == null)
 					continue;
