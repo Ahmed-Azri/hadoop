@@ -145,7 +145,7 @@ public class OpenFlowCommunicateClient extends Thread {
         mrJobInfoList = new MRJobInfoList();
 
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-		scheduler.scheduleAtFixedRate(new SendTask(), 1000, 500, TimeUnit.MILLISECONDS);
+		scheduler.scheduleAtFixedRate(new SendTask(), 1000, 250, TimeUnit.MILLISECONDS);
     }
 
     ///////////////////////
@@ -284,29 +284,22 @@ public class OpenFlowCommunicateClient extends Thread {
 	// **************************
     public void addMapperInfo(int taskTrackerIPAddress, String jobId, int mapperId) {
 		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
-		LOG.info("### add Mapper: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", simTaskTrackerIPAddress:" + InternetUtil.fromIPv4Address(simTaskTrackerIPAddress));
 		MapReduceJobInfo mapJobInfo = getMRJobInfoInTable(simTaskTrackerIPAddress, mapRecord);
 		getMRInfoInTable(jobId, mapperId, mapJobInfo.taskInfo);
     }
 	
     public void addReducerInfo(int taskTrackerIPAddress, String jobId, int reducerId) {
 		Integer simTaskTrackerIPAddress = REAL_IP_TO_SIM_IP.get(taskTrackerIPAddress);
-		LOG.info("### add Reducer: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", simTaskTrackerIPAddress:" + InternetUtil.fromIPv4Address(simTaskTrackerIPAddress) + 
-				", reducerId: " + reducerId);
 		for(Map.Entry<Integer, MapReduceJobInfo> mapRecordEntry : mapRecord.entrySet()) {
 			Integer mapper = mapRecordEntry.getKey();
 			if(mapper.equals(simTaskTrackerIPAddress))
 				continue;
 
-			LOG.info("### mapper: " + InternetUtil.fromIPv4Address(mapper));
-
 			MapReduceJobInfo mapJobInfo = mapRecordEntry.getValue();
 			for(Map.Entry<MapReduceJobTask, MapReduceInfo> mapJobInfoEntry : mapJobInfo.taskInfo.entrySet()) {
 				MapReduceJobTask jobTask = mapJobInfoEntry.getKey();
-				if(!jobId.equals(jobTask.jobId)) {
-					LOG.info("### jobId not match");
+				if(!jobId.equals(jobTask.jobId))
 					continue;
-				}
 				MapReduceInfo mapInfo = mapJobInfoEntry.getValue();
 				synchronized(mapInfo) {
 					if(!mapInfo.mapping.containsKey(reducerId)) {
@@ -321,7 +314,6 @@ public class OpenFlowCommunicateClient extends Thread {
 					synchronized(reduceInfo) {
 						int reduceReceiveBytes = getSizeInIDPair(mapper, reduceInfo.mapping).intValue();
 						reduceInfo.mapping.put(mapper, reduceReceiveBytes + newBytes);
-						LOG.info("### add mapping in reduceInfo, mapper: " + InternetUtil.fromIPv4Address(mapper) + ", size: " + (reduceReceiveBytes + newBytes));
 					}
 
 					//modify mrJobInfoList
@@ -331,6 +323,10 @@ public class OpenFlowCommunicateClient extends Thread {
 							= new SenderReceiverPair(mapper, simTaskTrackerIPAddress);
 						int currentBytes = getSizeInConnection(connection, shuffleRecord).intValue();	
 						shuffleRecord.put(connection, currentBytes + newBytes);
+					    if(!mrJobInfoList.isChange)
+					        mrJobInfoList.serialNum += 1;
+					    mrJobInfoList.isChange = true;
+						showMRJobInfoListMessage();
 					}
 				}
 			}
@@ -341,30 +337,23 @@ public class OpenFlowCommunicateClient extends Thread {
         String jobId = getJobID(report);
 		int mapperId = getTaskID(report);
         Map<Integer, Integer> newMapInfoList = report.getMapReduceInfo();
-        if(newMapInfoList == null) {
+        if(newMapInfoList == null)
 			return;
-		}
 
 		long serialNum = report.getSerialNumber();
 		MapReduceJobInfo mapJobInfo = mapRecord.get(simTaskTrackerIPAddress);
 		MapReduceJobTask mapJobTask = new MapReduceJobTask(jobId, mapperId);
 		MapReduceInfo mapInfo = mapJobInfo.taskInfo.get(mapJobTask);
 
-		LOG.info("### in record map, " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", old: " + mapInfo.serialNum + ", new: " + serialNum);
-
 		synchronized(mapInfo) {
 			if(mapInfo.serialNum == serialNum)
 				return;
 			mapInfo.serialNum = serialNum;
-			StringBuffer sb = new StringBuffer();
-			sb.append("\n\tin record map, dump mapInfo\n");
 			for(Integer reducerId : newMapInfoList.keySet()) {
 				int receivedBytes = getSizeInIDPair(reducerId, mapInfo.mapping).intValue();
 				int newReceivedBytes = newMapInfoList.get(reducerId).intValue();
 				mapInfo.mapping.put(reducerId, receivedBytes + newReceivedBytes);
-				sb.append("\n\t\tReduceId: " + reducerId + ", size: " + (receivedBytes + newReceivedBytes) + "\n");
 			}
-			LOG.info(sb.toString());
 		}
     }
     public void recordShuffleInMRTable(int taskTrackerIPAddress, TaskStatus report) {
@@ -380,8 +369,6 @@ public class OpenFlowCommunicateClient extends Thread {
 		MapReduceJobTask reduceJobTask = new MapReduceJobTask(jobId, reducerId);
 		MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
 
-		LOG.info("### in record shuffle, " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + 
-				 ", old: " + reduceInfo.serialNum + ", new: " + serialNum + ", newMapInfoList.size: " + newMapInfoList.size());
 		synchronized(reduceInfo) {
 			if(reduceInfo.serialNum == serialNum)
 				return;
@@ -407,10 +394,8 @@ public class OpenFlowCommunicateClient extends Thread {
 					SenderReceiverPair connection = new SenderReceiverPair(mapper, simTaskTrackerIPAddress);
 					if(!shuffleRecord.containsKey(connection) 
 					   || shuffleRecord.get(connection) == null) { //should not happen...
-						LOG.info("### shuffleRecord have no info about [" + InternetUtil.fromIPv4Address(connection.getFirstHost()) + 
-								 "," + InternetUtil.fromIPv4Address(connection.getSecondHost()) + "]");
 						continue;
-					   }
+					}
 					int needToTransmissionBytes = shuffleRecord.get(connection).intValue();
 
 					needToTransmissionBytes -= receivedBytes;
