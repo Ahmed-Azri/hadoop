@@ -21,7 +21,7 @@
 </property>
 <property>
 	<name>mapred.tasktracker.map.tasks.maximum</name>
-	<value>1</value>
+	<value>2</value>
 	<description>The maximum number of map tasks that will be run
 		simultaneously by a task tracker. 
 	</description>
