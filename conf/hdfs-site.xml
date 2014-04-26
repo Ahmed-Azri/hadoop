@@ -16,4 +16,12 @@
   <name>slave.host.name</name>
   <value>${local.bind.address}</value>
 </property>
+<property>
+	<name>dfs.datanode.socket.write.timeout</name>
+	<value>180000</value>
+</property>
+<property>
+	<name>dfs.datanode.socket.timeout</name>
+	<value>180000</value>
+</property>
 </configuration>
