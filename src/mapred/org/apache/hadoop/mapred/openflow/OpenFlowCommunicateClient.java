@@ -186,7 +186,7 @@ public class OpenFlowCommunicateClient extends Thread {
                 isConnected.set(true);
                 break;
             } catch(IOException e) {
-                LOG.error("### IOException in OpenFlowCommunicateClient :" + e.toString());
+//                LOG.error("### IOException in OpenFlowCommunicateClient :" + e.toString());
                 in = null;
                 out = null;
                 isConnected.set(false);
