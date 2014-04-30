@@ -1939,6 +1939,7 @@ class ReduceTask extends Task {
           } finally {
             openflowLock.unlock();
           }
+		  LOG.info("\n\tReceive " + currentReceivedBytes + " from " + InternetUtil.fromIPv4Address(remoteHostIPAddress) + "\n");
 		}
 	  }
 	  //
