@@ -368,6 +368,10 @@ public class OpenFlowCommunicateClient extends Thread {
 		MapReduceJobInfo reduceJobInfo = reduceRecord.get(simTaskTrackerIPAddress);
 		MapReduceJobTask reduceJobTask = new MapReduceJobTask(jobId, reducerId);
 		MapReduceInfo reduceInfo = reduceJobInfo.taskInfo.get(reduceJobTask);
+		if(reduceInfo == null) {
+			LOG.info("### taskTracker: " + InternetUtil.fromIPv4Address(taskTrackerIPAddress) + ", no info about (" + jobId + ", " + reducerId + ")");
+			return;
+		}
 
 		synchronized(reduceInfo) {
 			if(reduceInfo.serialNum == serialNum)
