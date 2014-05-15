@@ -188,7 +188,9 @@ class JobQueueTaskScheduler extends TaskScheduler {
             }
            
             // Try all jobs again for the next Map task 
-            break;
+			// ### only schedule one map
+            break scheduleMaps;
+			// ###
           }
           
           // Try to schedule a node-local or rack-local Map task
