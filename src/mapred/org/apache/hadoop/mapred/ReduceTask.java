@@ -1543,6 +1543,7 @@ class ReduceTask extends Task {
           Long.parseLong(connection.getHeaderField(RAW_MAP_OUTPUT_LENGTH));  
         long compressedLength = 
           Long.parseLong(connection.getHeaderField(MAP_OUTPUT_LENGTH));
+		LOG.info("### decompressedLength=" + decompressedLength + ", compressedLength=" + compressedLength);
 
         if (compressedLength < 0 || decompressedLength < 0) {
           LOG.warn(getName() + " invalid lengths in map output header: id: " +
