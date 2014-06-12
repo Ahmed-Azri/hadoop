@@ -59,6 +59,7 @@ public class OpenFlowCommunicateClient extends Thread {
             REAL_IP_TO_SIM_IP.put(SIM_IP_TO_REAL_IP.get(simIP), simIP);
     }
 
+	protected static long MR_INFO_SEND_PERIOD_MS = 400;
 
 	class MapReduceInfo {
 		long serialNum = -1;
@@ -145,7 +146,7 @@ public class OpenFlowCommunicateClient extends Thread {
         mrJobInfoList = new MRJobInfoList();
 
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-		scheduler.scheduleAtFixedRate(new SendTask(), 1000, 250, TimeUnit.MILLISECONDS);
+		scheduler.scheduleAtFixedRate(new SendTask(), 1000, MR_INFO_SEND_PERIOD_MS, TimeUnit.MILLISECONDS);
     }
 
     ///////////////////////
